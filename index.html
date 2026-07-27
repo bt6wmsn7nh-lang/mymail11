@@ -1,13 +1,199 @@
 <!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MyMail</title>
-<link rel="stylesheet" href="style.css">
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>MyMail</title>
+
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<h1>MyMail</h1>
-<p>Root-folder deployment template.</p>
-<button onclick="alert('Replace with your login UI')">Login</button>
-<script src="app.js"></script>
-</body></html>
+  <main class="page">
+    <section class="mail-card">
+      <div class="logo">M</div>
+
+      <h1>MyMail</h1>
+
+      <p class="subtitle">
+        Connect your email accounts and view your mail in one place.
+      </p>
+
+      <div class="login-buttons">
+        <a class="login-button google" href="/auth/google">
+          Continue with Google
+        </a>
+
+        <button
+          class="login-button qr"
+          id="qrLoginButton"
+          type="button"
+        >
+          Sign in using QR code
+        </button>
+
+        <button
+          class="login-button provider"
+          id="otherProviderButton"
+          type="button"
+        >
+          Connect another mail service
+        </button>
+      </div>
+
+      <div class="status-box" id="statusBox">
+        Checking server connection...
+      </div>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="providerModal">
+    <div class="modal-card">
+      <button
+        class="close-button"
+        id="closeProviderModal"
+        type="button"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+      <h2>Connect a mail account</h2>
+
+      <p class="modal-description">
+        Choose your provider and enter the required account details.
+      </p>
+
+      <form id="providerForm">
+        <label for="provider">
+          Mail provider
+        </label>
+
+        <select id="provider" name="provider" required>
+          <option value="">Choose a provider</option>
+          <option value="icloud">iCloud Mail</option>
+          <option value="yahoo">Yahoo Mail</option>
+          <option value="outlook">Outlook</option>
+          <option value="rambler">Rambler</option>
+          <option value="custom">Custom IMAP</option>
+        </select>
+
+        <label for="email">
+          Email address
+        </label>
+
+        <input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="name@example.com"
+          autocomplete="email"
+          required
+        >
+
+        <label for="password">
+          App-specific password
+        </label>
+
+        <input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Enter your app password"
+          autocomplete="current-password"
+          required
+        >
+
+        <div class="custom-fields hidden" id="customFields">
+          <label for="imapHost">
+            IMAP host
+          </label>
+
+          <input
+            id="imapHost"
+            name="imapHost"
+            type="text"
+            placeholder="imap.example.com"
+          >
+
+          <label for="imapPort">
+            IMAP port
+          </label>
+
+          <input
+            id="imapPort"
+            name="imapPort"
+            type="number"
+            value="993"
+            min="1"
+            max="65535"
+          >
+
+          <label for="smtpHost">
+            SMTP host
+          </label>
+
+          <input
+            id="smtpHost"
+            name="smtpHost"
+            type="text"
+            placeholder="smtp.example.com"
+          >
+
+          <label for="smtpPort">
+            SMTP port
+          </label>
+
+          <input
+            id="smtpPort"
+            name="smtpPort"
+            type="number"
+            value="465"
+            min="1"
+            max="65535"
+          >
+        </div>
+
+        <button class="submit-button" type="submit">
+          Connect account
+        </button>
+
+        <p class="form-message" id="providerMessage"></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="qrModal">
+    <div class="modal-card qr-card">
+      <button
+        class="close-button"
+        id="closeQrModal"
+        type="button"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+      <h2>Sign in with your phone</h2>
+
+      <p class="modal-description">
+        Scan the QR code with your phone, then complete Google sign-in.
+      </p>
+
+      <div class="qr-container" id="qrContainer">
+        <div class="loader"></div>
+        <p>Creating secure sign-in code...</p>
+      </div>
+
+      <p class="form-message" id="qrMessage"></p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
