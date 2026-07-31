@@ -1,199 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>MyMail</title>
-
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>School Bus Escape PvP</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070b;color:#eef3f8;font-family:Arial,sans-serif}canvas{display:block;width:100%;height:100%;background:#0a0d12}.panel{background:rgba(8,11,16,.88);border:1px solid #ffffff18;border-radius:14px;box-shadow:0 12px 35px #0008;backdrop-filter:blur(8px)}#hud{position:fixed;inset:0;pointer-events:none}#top{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:min(760px,94vw);padding:10px;text-align:center}.title{font-weight:900;letter-spacing:.08em;color:#ff6969;font-size:clamp(19px,3vw,30px)}.muted{color:#9ca8b6;font-size:12px;margin-top:4px}#task{position:absolute;left:12px;top:94px;width:min(330px,46vw);padding:12px}#stats{position:absolute;right:12px;top:94px;width:min(250px,42vw);padding:12px;text-align:right}.bar{height:10px;background:#242a34;border-radius:99px;overflow:hidden;margin-top:6px}.fill{height:100%;width:0}.hp{background:#50d68b}.noise{background:#e24b4b}.prog{background:#58a6ff}#bottom{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:10px;width:min(720px,95vw)}.bottomBox{padding:10px;flex:1;font-size:12px;font-weight:900}#msg{position:absolute;left:50%;top:68%;transform:translate(-50%,-50%);padding:14px 22px;font-weight:900;display:none}#menu,#loading,#end{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#18202ccf,#020305f4);z-index:10}.card{width:min(850px,94vw);padding:26px}.card h1{font-size:clamp(32px,7vw,62px);margin:0 0 8px}.card p{color:#aab4c0;line-height:1.5}.buses{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:20px}.bus{border:0;border-radius:14px;padding:18px 8px;cursor:pointer;background:linear-gradient(#edbd47,#8f5b0e);color:#171006;font-weight:900;box-shadow:0 9px 24px #0008}.bus:hover{transform:translateY(-3px);filter:brightness(1.1)}.bus small{display:block;margin-top:6px}.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}.control{background:#121722;border-radius:9px;padding:9px;color:#cbd4df;font-size:12px}#loading,#end{display:none;text-align:center}#deviceSelect{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#192333,#020305f6);z-index:30}.deviceGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}.deviceBtn{border:1px solid #ffffff20;border-radius:16px;padding:22px 14px;background:#131a25;color:white;cursor:pointer;text-align:center;transition:.18s}.deviceBtn:hover{transform:translateY(-4px);border-color:#ff6969;box-shadow:0 12px 30px #0008}.deviceIcon{font-size:38px;display:block;margin-bottom:10px}.deviceName{font-size:19px;font-weight:900}.deviceDesc{font-size:12px;color:#aab4c0;margin-top:7px;line-height:1.4}#changeDevice{position:absolute;right:12px;bottom:12px;pointer-events:auto;border:1px solid #ffffff22;background:#121722;color:white;border-radius:10px;padding:8px 11px;font-weight:800;cursor:pointer}#controlHint{position:absolute;left:12px;bottom:12px;max-width:430px;padding:9px 12px;font-size:12px;color:#cbd4df}.consoleFocus{outline:3px solid #ff6969!important;transform:translateY(-3px);filter:brightness(1.12)}.spin{width:62px;height:62px;border:7px solid #2a303b;border-top-color:#e24b4b;border-radius:50%;animation:spin .75s linear infinite;margin:auto}@keyframes spin{to{transform:rotate(360deg)}}#mobile{position:fixed;inset:0;pointer-events:none}.joy{position:absolute;bottom:20px;width:122px;height:122px;border-radius:50%;background:#ffffff12;border:2px solid #ffffff1f;pointer-events:auto;touch-action:none}.knob{position:absolute;width:48px;height:48px;left:35px;top:35px;border-radius:50%;background:#ffffff42}#move{left:18px}#aim{right:18px}.mBtn{position:absolute;border:0;border-radius:50%;color:white;font-weight:900;pointer-events:auto}#fire{right:42px;bottom:158px;width:75px;height:75px;background:#c73636}#reload{right:130px;bottom:145px;width:58px;height:58px;background:#343b48}#mobile{display:none}@media(max-width:650px){.deviceGrid{grid-template-columns:1fr}.deviceBtn{padding:14px}.deviceIcon{font-size:28px}.deviceDesc{display:none}}@media(max-width:650px){.buses{grid-template-columns:repeat(2,1fr)}.buses button:last-child{grid-column:span 2}.controls{grid-template-columns:1fr 1fr}#task,#stats{font-size:11px}}
+</style>
 </head>
-
 <body>
-  <main class="page">
-    <section class="mail-card">
-      <div class="logo">M</div>
-
-      <h1>MyMail</h1>
-
-      <p class="subtitle">
-        Connect your email accounts and view your mail in one place.
-      </p>
-
-      <div class="login-buttons">
-        <a class="login-button google" href="/auth/google">
-          Continue with Google
-        </a>
-
-        <button
-          class="login-button qr"
-          id="qrLoginButton"
-          type="button"
-        >
-          Sign in using QR code
-        </button>
-
-        <button
-          class="login-button provider"
-          id="otherProviderButton"
-          type="button"
-        >
-          Connect another mail service
-        </button>
-      </div>
-
-      <div class="status-box" id="statusBox">
-        Checking server connection...
-      </div>
-    </section>
-  </main>
-
-  <div class="modal hidden" id="providerModal">
-    <div class="modal-card">
-      <button
-        class="close-button"
-        id="closeProviderModal"
-        type="button"
-        aria-label="Close"
-      >
-        ×
-      </button>
-
-      <h2>Connect a mail account</h2>
-
-      <p class="modal-description">
-        Choose your provider and enter the required account details.
-      </p>
-
-      <form id="providerForm">
-        <label for="provider">
-          Mail provider
-        </label>
-
-        <select id="provider" name="provider" required>
-          <option value="">Choose a provider</option>
-          <option value="icloud">iCloud Mail</option>
-          <option value="yahoo">Yahoo Mail</option>
-          <option value="outlook">Outlook</option>
-          <option value="rambler">Rambler</option>
-          <option value="custom">Custom IMAP</option>
-        </select>
-
-        <label for="email">
-          Email address
-        </label>
-
-        <input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="name@example.com"
-          autocomplete="email"
-          required
-        >
-
-        <label for="password">
-          App-specific password
-        </label>
-
-        <input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="Enter your app password"
-          autocomplete="current-password"
-          required
-        >
-
-        <div class="custom-fields hidden" id="customFields">
-          <label for="imapHost">
-            IMAP host
-          </label>
-
-          <input
-            id="imapHost"
-            name="imapHost"
-            type="text"
-            placeholder="imap.example.com"
-          >
-
-          <label for="imapPort">
-            IMAP port
-          </label>
-
-          <input
-            id="imapPort"
-            name="imapPort"
-            type="number"
-            value="993"
-            min="1"
-            max="65535"
-          >
-
-          <label for="smtpHost">
-            SMTP host
-          </label>
-
-          <input
-            id="smtpHost"
-            name="smtpHost"
-            type="text"
-            placeholder="smtp.example.com"
-          >
-
-          <label for="smtpPort">
-            SMTP port
-          </label>
-
-          <input
-            id="smtpPort"
-            name="smtpPort"
-            type="number"
-            value="465"
-            min="1"
-            max="65535"
-          >
-        </div>
-
-        <button class="submit-button" type="submit">
-          Connect account
-        </button>
-
-        <p class="form-message" id="providerMessage"></p>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal hidden" id="qrModal">
-    <div class="modal-card qr-card">
-      <button
-        class="close-button"
-        id="closeQrModal"
-        type="button"
-        aria-label="Close"
-      >
-        ×
-      </button>
-
-      <h2>Sign in with your phone</h2>
-
-      <p class="modal-description">
-        Scan the QR code with your phone, then complete Google sign-in.
-      </p>
-
-      <div class="qr-container" id="qrContainer">
-        <div class="loader"></div>
-        <p>Creating secure sign-in code...</p>
-      </div>
-
-      <p class="form-message" id="qrMessage"></p>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+<canvas id="game"></canvas>
+<div id="deviceSelect"><div class="card panel"><h1>Choose Your Device</h1><p>Select how you are playing. The game will automatically apply the correct controls and show your keybinds.</p><div class="deviceGrid"><button class="deviceBtn" data-device="pc"><span class="deviceIcon">⌨️</span><span class="deviceName">PC</span><div class="deviceDesc">Keyboard and mouse controls with precise aiming.</div></button><button class="deviceBtn" data-device="mobile"><span class="deviceIcon">📱</span><span class="deviceName">Mobile</span><div class="deviceDesc">Touch joysticks with fire, reload, sprint, and interact buttons.</div></button><button class="deviceBtn" data-device="console"><span class="deviceIcon">🎮</span><span class="deviceName">Console</span><div class="deviceDesc">Xbox, PlayStation, and compatible browser gamepads.</div></button></div></div></div>
+<div id="hud">
+ <div id="top" class="panel"><div class="title">SCHOOL BUS ESCAPE PVP</div><div class="muted">Stay quiet, complete tasks, fight opponents, and escape.</div></div>
+ <div id="task" class="panel"><b id="taskName">TASK: Waiting</b><div id="taskDesc" class="muted">Choose a bus.</div><div class="bar"><div id="taskFill" class="fill prog"></div></div><div id="taskCount" class="muted">0 / 0</div></div>
+ <div id="stats" class="panel"><b id="timer">05:00</b><div>Skill: <b id="skill">0</b></div><div>Max HP: <b id="maxhp">100</b></div><div>Ammo: <b id="ammo">12 / 12</b></div></div>
+ <div id="bottom"><div class="panel bottomBox">HEALTH<div class="bar"><div id="hpFill" class="fill hp"></div></div></div><div class="panel bottomBox">NOISE<div class="bar"><div id="noiseFill" class="fill noise"></div></div></div></div>
+ <div id="msg" class="panel"></div><div id="controlHint" class="panel">Choose a device to see controls.</div><button id="changeDevice">CHANGE DEVICE</button>
+</div>
+<div id="menu"><div class="card panel"><h1>School Bus Escape</h1><p>Choose one of five buses. A match starts even with one player. This standalone HTML edition includes five computer-controlled opponents and a noise-hunting six-legged monster.</p><div class="buses"><button class="bus" data-b="1">BUS 1<small>Enter circle</small></button><button class="bus" data-b="2">BUS 2<small>Enter circle</small></button><button class="bus" data-b="3">BUS 3<small>Enter circle</small></button><button class="bus" data-b="4">BUS 4<small>Enter circle</small></button><button class="bus" data-b="5">BUS 5<small>Enter circle</small></button></div><div class="controls" id="menuControls"></div></div></div>
+<div id="loading"><div><div class="spin"></div><h2 id="loadText">BUS IS LEAVING</h2><p class="muted">Loading school...</p></div></div>
+<div id="end"><div class="card panel"><h1 id="endTitle">ROUND OVER</h1><p id="endText"></p><button id="again" class="bus" style="width:220px">RETURN TO BUSES</button></div></div>
+<div id="mobile"><div id="move" class="joy"><div class="knob"></div></div><div id="aim" class="joy"><div class="knob"></div></div><button id="fire" class="mBtn">FIRE</button><button id="reload" class="mBtn">R</button><button id="sprint" class="mBtn" style="left:42px;bottom:158px;width:72px;height:72px;background:#3b6e9e">RUN</button><button id="interact" class="mBtn" style="right:205px;bottom:148px;width:62px;height:62px;background:#3c875b">USE</button></div>
+<script>
+const c=document.getElementById('game'),x=c.getContext('2d');let W,H,D=Math.min(devicePixelRatio||1,2);function size(){W=innerWidth;H=innerHeight;c.width=W*D;c.height=H*D;x.setTransform(D,0,0,D,0,0)}onresize=size;size();
+const q=id=>document.getElementById(id),ui={menu:q('menu'),loading:q('loading'),end:q('end'),timer:q('timer'),skill:q('skill'),maxhp:q('maxhp'),ammo:q('ammo'),hp:q('hpFill'),noise:q('noiseFill'),task:q('taskFill'),tn:q('taskName'),td:q('taskDesc'),tc:q('taskCount'),msg:q('msg')};
+let deviceMode=localStorage.getItem('schoolEscapeDevice')||'';
+const controlSets={
+ pc:[['WASD','Move'],['Mouse','Aim'],['Left Click','Shoot'],['R','Reload'],['Shift','Sprint louder'],['E','Interact']],
+ mobile:[['Left Stick','Move'],['Right Stick','Aim'],['FIRE','Shoot'],['R','Reload'],['RUN','Sprint louder'],['USE','Interact']],
+ console:[['Left Stick','Move'],['Right Stick','Aim'],['RT / R2','Shoot'],['X / Square','Reload'],['L3','Sprint louder'],['A / Cross','Interact']]
+};
+function setDevice(mode){
+ deviceMode=mode;localStorage.setItem('schoolEscapeDevice',mode);q('deviceSelect').style.display='none';
+ q('mobile').style.display=mode==='mobile'?'block':'none';
+ const labels=controlSets[mode];q('menuControls').innerHTML=labels.map(v=>`<div class="control"><b>${v[0]}</b><br>${v[1]}</div>`).join('');
+ q('controlHint').innerHTML='<b>'+mode.toUpperCase()+'</b>: '+labels.map(v=>v[0]+' '+v[1]).join(' • ');
+ if(mode==='pc') c.onclick=()=>{if(state==='play')c.requestPointerLock?.()}; else c.onclick=null;
+}
+document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>setDevice(b.dataset.device));
+q('changeDevice').onclick=()=>{q('deviceSelect').style.display='flex'};
+if(deviceMode)setDevice(deviceMode);
+const keys={},mouse={x:0,y:0};onkeydown=e=>{keys[e.key.toLowerCase()]=1;if(e.key.toLowerCase()==='r')reload();if(e.key.toLowerCase()==='e')interact()};onkeyup=e=>keys[e.key.toLowerCase()]=0;c.onmousemove=e=>{if(deviceMode==='pc'&&document.pointerLockElement===c&&state==='play'){player.a+=e.movementX*.0028;mouse.x=W/2+Math.cos(player.a)*240;mouse.y=H/2+Math.sin(player.a)*240}else{mouse.x=e.clientX;mouse.y=e.clientY}};c.onmousedown=()=>shoot();
+let state='menu',last=performance.now(),world={w:2400,h:1500},cam={x:0,y:0,s:0},player,monster,bots=[],bullets=[],walls=[],desks=[],lockers=[],stations=[],round=300,exitOpen=false,skill=0,hpBonus=0,currentTask,progress=0;
+const tasks=[{n:'Quiet Steps',d:'Stay below 25 noise for 35 seconds',g:35,t:'quiet',s:1,h:10},{n:'Hall Runner',d:'Travel 450 meters',g:450,t:'move',s:1,h:5},{n:'Survivor',d:'Stay alive for 90 seconds',g:90,t:'time',s:2,h:15},{n:'Supply Run',d:'Activate 3 blue stations',g:3,t:'station',s:1,h:10},{n:'Combat Practice',d:'Hit opponents 4 times',g:4,t:'hit',s:1,h:5}];
+const R=(a,b)=>Math.random()*(b-a)+a,C=(v,a,b)=>Math.max(a,Math.min(b,v)),DST=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);function rc(r,o,rad){let nx=C(o.x,r.x,r.x+r.w),ny=C(o.y,r.y,r.y+r.h);return Math.hypot(o.x-nx,o.y-ny)<rad}
+function say(t){ui.msg.textContent=t;ui.msg.style.display='block';clearTimeout(say.t);say.t=setTimeout(()=>ui.msg.style.display='none',1700)}
+function task(){currentTask=tasks[Math.floor(Math.random()*tasks.length)];progress=0;taskUI()}function taskUI(){ui.tn.textContent='TASK: '+currentTask.n;ui.td.textContent=currentTask.d;ui.tc.textContent=Math.floor(progress)+' / '+currentTask.g;ui.task.style.width=progress/currentTask.g*100+'%'}function add(n){progress=Math.min(currentTask.g,progress+n);if(progress>=currentTask.g){skill+=currentTask.s;hpBonus+=currentTask.h;player.max=100+hpBonus;player.hp=Math.min(player.max,player.hp+currentTask.h);say(`Task complete: +${currentTask.s} skill, +${currentTask.h} health`);setTimeout(task,1200)}taskUI()}
+function reset(){walls=[];desks=[];lockers=[];stations=[];bots=[];bullets=[];player={x:1200,y:1370,r:16,a:-1.57,hp:100+hpBonus,max:100+hpBonus,noise:0,ammo:12,reload:0,alive:1};monster={x:1200,y:110,r:22,s:215,p:0};round=300;exitOpen=0;walls.push({x:0,y:0,w:2400,h:30},{x:0,y:1470,w:2400,h:30},{x:0,y:0,w:30,h:1500},{x:2370,y:0,w:30,h:1500},{x:1010,y:70,w:18,h:1360},{x:1372,y:70,w:18,h:1360});for(let y=160;y<1370;y+=180){walls.push({x:55,y,w:955,h:16},{x:1390,y,w:955,h:16})}for(let y=95;y<1380;y+=42){lockers.push({x:1038,y,w:28,h:34},{x:1334,y,w:28,h:34})}for(let side=0;side<2;side++)for(let row=0;row<7;row++)for(let rr=0;rr<3;rr++)for(let cc=0;cc<4;cc++)desks.push({x:(side?1515:170)+cc*90,y:80+row*180+35+rr*38,w:58,h:22});[[180,220],[2200,250],[180,760],[2200,890],[1200,750],[1080,220],[1320,1230]].forEach((p,i)=>stations.push({x:p[0],y:p[1],r:18,on:1,n:['Fuse','Computer','Keys','Alarm','Map','Locker','Radio'][i]}));for(let i=0;i<5;i++)bots.push({x:R(100,2300),y:R(180,1350),r:15,hp:100,on:1,a:R(0,6.28),cd:0,n:0,tx:0,vx:0,vy:0});task()}
+function blocked(o,nx,ny){let t={x:nx,y:ny};for(const r of [...walls,...desks,...lockers])if(rc(r,t,o.r))return 1}function move(o,dx,dy){if(!blocked(o,o.x+dx,o.y))o.x+=dx;if(!blocked(o,o.x,o.y+dy))o.y+=dy;o.x=C(o.x,48,2352);o.y=C(o.y,48,1452)}
+function reload(){if(state!=='play'||player.reload||player.ammo===12)return;player.reload=1;say('Reloading...');setTimeout(()=>{if(player){player.ammo=12;player.reload=0}},1100)}function shoot(){if(state!=='play'||!player.alive||player.reload)return;if(player.ammo<1)return reload();player.ammo--;player.noise=C(player.noise+22,0,100);cam.s=6;bullets.push({x:player.x,y:player.y,vx:Math.cos(player.a)*720,vy:Math.sin(player.a)*720,l:1,o:'p'})}
+function interact(){if(state!=='play')return;for(const s of stations)if(s.on&&DST(player,s)<55){s.on=0;if(currentTask.t==='station')add(1);say('Activated '+s.n);return}if(exitOpen&&player.y<75&&Math.abs(player.x-1200)<85)finish(1,'You escaped the school.')}
+function hit(n){player.hp-=n;cam.s=11;if(player.hp<=0){player.hp=0;player.alive=0;finish(0,'You were eliminated in the school.')}}function finish(win,text){state='end';ui.end.style.display='flex';q('endTitle').textContent=win?'YOU ESCAPED':'ROUND OVER';q('endText').textContent=text}
+function start(b){ui.menu.style.display='none';ui.loading.style.display='flex';q('loadText').textContent='BUS '+b+' IS LEAVING';setTimeout(()=>{ui.loading.style.display='none';reset();state='play';last=performance.now();if(deviceMode==='pc')setTimeout(()=>c.requestPointerLock?.(),100)},1500)}document.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>start(b.dataset.b));q('again').onclick=()=>{state='menu';ui.end.style.display='none';ui.menu.style.display='flex'};
+let prevPadButtons={};
+function dead(v,d=.18){return Math.abs(v)<d?0:(Math.abs(v)-d)/(1-d)*Math.sign(v)}
+function readGamepad(){
+ if(deviceMode!=='console')return null;
+ const gp=[...navigator.getGamepads()].find(Boolean);if(!gp)return null;
+ const lx=dead(gp.axes[0]||0),ly=dead(gp.axes[1]||0),rx=dead(gp.axes[2]||0),ry=dead(gp.axes[3]||0);
+ if(Math.hypot(rx,ry)>.12)player.a=Math.atan2(ry,rx);
+ const down=i=>!!gp.buttons[i]?.pressed, pressed=i=>{const now=down(i),was=!!prevPadButtons[i];prevPadButtons[i]=now;return now&&!was};
+ if((gp.buttons[7]?.value||0)>.35)shoot();
+ if(pressed(2))reload();
+ if(pressed(0))interact();
+ return {x:lx,y:ly,sprint:down(10)};
+}
+function update(dt){if(state!=='play')return;round-=dt;if(round<=0)return finish(0,'Time ran out.');if(round<180&&!exitOpen){exitOpen=1;say('The exit is open!')}if(deviceMode==='pc'&&document.pointerLockElement!==c){let ax=mouse.x-W/2+cam.x,ay=mouse.y-H/2+cam.y;player.a=Math.atan2(ay-player.y,ax-player.x);}let pad=readGamepad(),dx=pad?pad.x:(keys.d?1:0)-(keys.a?1:0),dy=pad?pad.y:(keys.s?1:0)-(keys.w?1:0),m=Math.hypot(dx,dy)||1,sprinting=pad?pad.sprint:keys.shift,sp=(175+skill*3)*(sprinting?1.45:1);dx=dx/m*sp*dt;dy=dy/m*sp*dt;if(Math.abs(dx)+Math.abs(dy)){move(player,dx,dy);let tr=Math.hypot(dx,dy)/10;player.noise=C(player.noise+(sprinting?18:6)*dt,0,100);if(currentTask.t==='move')add(tr)}else player.noise=Math.max(0,player.noise-8*dt);if(currentTask.t==='quiet'&&player.noise<25)add(dt);if(currentTask.t==='time')add(dt);
+for(const b of bots){if(!b.on)continue;b.cd-=dt;b.tx-=dt;b.n=Math.max(0,b.n-8*dt);if(b.tx<=0){b.tx=R(.7,2);let a=R(0,6.28);b.vx=Math.cos(a);b.vy=Math.sin(a)}let d=DST(b,player);if(d<430){b.a=Math.atan2(player.y-b.y,player.x-b.x);if(d>175){b.vx=Math.cos(b.a);b.vy=Math.sin(b.a)}if(b.cd<=0){b.cd=R(.75,1.35);b.n=45;bullets.push({x:b.x,y:b.y,vx:Math.cos(b.a)*560,vy:Math.sin(b.a)*560,l:1.2,o:b})}}move(b,b.vx*90*dt,b.vy*90*dt)}
+let tar=null,loud=18;if(player.alive&&player.noise>loud){tar=player;loud=player.noise}for(const b of bots)if(b.on&&b.n>loud){tar=b;loud=b.n}if(tar){let a=Math.atan2(tar.y-monster.y,tar.x-monster.x);monster.p+=dt*11;move(monster,Math.cos(a)*(monster.s+loud*.35)*dt,Math.sin(a)*(monster.s+loud*.35)*dt);if(DST(monster,tar)<45){if(tar===player)hit(24*dt);else{tar.hp-=35*dt;if(tar.hp<=0)tar.on=0}}}
+for(let i=bullets.length-1;i>=0;i--){let b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.l-=dt;if(b.l<=0){bullets.splice(i,1);continue}let stop=0;for(const r of [...walls,...desks])if(rc(r,b,3)){stop=1;break}if(stop){bullets.splice(i,1);continue}if(b.o==='p'){for(const e of bots)if(e.on&&DST(b,e)<20){e.hp-=34;e.n=38;if(currentTask.t==='hit')add(1);if(e.hp<=0)e.on=0;bullets.splice(i,1);break}}else if(player.alive&&DST(b,player)<21){hit(18);player.noise=C(player.noise+10,0,100);bullets.splice(i,1)}}cam.x=C(player.x-W/2,0,2400-W);cam.y=C(player.y-H/2,0,1500-H);cam.s=Math.max(0,cam.s-28*dt);ui.timer.textContent=String(Math.floor(round/60)).padStart(2,'0')+':'+String(Math.floor(round%60)).padStart(2,'0');ui.hp.style.width=player.hp/player.max*100+'%';ui.noise.style.width=player.noise+'%';ui.skill.textContent=skill;ui.maxhp.textContent=100+hpBonus;ui.ammo.textContent=player.reload?'RELOADING':player.ammo+' / 12'}
+function draw(){x.clearRect(0,0,W,H);if(state==='menu')return;x.save();x.translate(-cam.x+R(-cam.s,cam.s),-cam.y+R(-cam.s,cam.s));x.fillStyle='#777b81';x.fillRect(0,0,2400,1500);x.strokeStyle='#2d313620';for(let i=0;i<2400;i+=48){x.beginPath();x.moveTo(i,0);x.lineTo(i,1500);x.stroke()}for(let i=0;i<1500;i+=48){x.beginPath();x.moveTo(0,i);x.lineTo(2400,i);x.stroke()}x.fillStyle='#9da0a5';x.fillRect(1028,30,344,1440);x.fillStyle='#8b725a';for(let y=80;y<1400;y+=180){x.fillRect(30,y,980,160);x.fillRect(1390,y,980,160)}x.fillStyle='#d0cec7';for(const r of walls)x.fillRect(r.x,r.y,r.w,r.h);for(const l of lockers){x.fillStyle='#506b80';x.fillRect(l.x,l.y,l.w,l.h);x.strokeStyle='#273642';x.strokeRect(l.x,l.y,l.w,l.h);x.fillStyle='#c4c8cc';x.fillRect(l.x+19,l.y+14,3,9)}for(const d of desks){x.fillStyle='#76563b';x.fillRect(d.x,d.y,d.w,d.h);x.fillStyle='#33363a';x.fillRect(d.x+5,d.y+d.h,4,11);x.fillRect(d.x+d.w-9,d.y+d.h,4,11)}for(const s of stations)if(s.on){let p=1+Math.sin(performance.now()/220)*.15;x.beginPath();x.arc(s.x,s.y,s.r*p,0,6.28);x.fillStyle='#58a6ffc0';x.fill();x.fillStyle='white';x.textAlign='center';x.font='12px Arial';x.fillText(s.n,s.x,s.y-26)}x.fillStyle=exitOpen?'#39c97b':'#a83232';x.fillRect(1140,5,120,28);x.fillStyle='white';x.font='bold 15px Arial';x.textAlign='center';x.fillText(exitOpen?'EXIT OPEN':'EXIT LOCKED',1200,24);for(const b of bots)if(b.on){x.save();x.translate(b.x,b.y);x.rotate(b.a);x.fillStyle='#d7a25c';x.beginPath();x.arc(0,0,15,0,6.28);x.fill();x.fillStyle='#20242a';x.fillRect(6,-3,25,6);x.restore()}x.save();x.translate(monster.x,monster.y);for(let i=0;i<6;i++){let side=i%2?1:-1,row=Math.floor(i/2)-1,ph=monster.p+i;x.strokeStyle='#14161a';x.lineWidth=5;x.beginPath();x.moveTo(side*7,row*9);x.lineTo(side*(27+Math.sin(ph)*4),row*18);x.lineTo(side*(46+Math.cos(ph)*6),row*29);x.stroke()}x.fillStyle='#202228';x.beginPath();x.ellipse(0,0,11,34,0,0,6.28);x.fill();x.fillStyle='#edf3ff';x.beginPath();x.arc(-4,-20,2.5,0,6.28);x.arc(4,-20,2.5,0,6.28);x.fill();x.restore();if(player){x.save();x.translate(player.x,player.y);x.rotate(player.a);x.fillStyle='#4f9fff';x.beginPath();x.arc(0,0,16,0,6.28);x.fill();x.fillStyle='#20242a';x.fillRect(6,-4,30,8);x.restore()}x.fillStyle='#ffe18b';for(const b of bullets){x.beginPath();x.arc(b.x,b.y,3,0,6.28);x.fill()}x.restore();let g=x.createRadialGradient(W/2,H/2,Math.min(W,H)*.15,W/2,H/2,Math.max(W,H)*.7);g.addColorStop(0,'#0000');g.addColorStop(1,'#000b');x.fillStyle=g;x.fillRect(0,0,W,H)}function loop(t){let dt=Math.min((t-last)/1000,.033);last=t;update(dt);draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+function joy(id,cb){let el=q(id),kn=el.firstElementChild,on=0,st={};function mv(e){if(!on)return;let p=e.touches[0],dx=p.clientX-st.x,dy=p.clientY-st.y,m=Math.hypot(dx,dy),mx=40;if(m>mx){dx=dx/m*mx;dy=dy/m*mx}kn.style.transform=`translate(${dx}px,${dy}px)`;cb(dx/mx,dy/mx)}el.ontouchstart=e=>{on=1;let r=el.getBoundingClientRect();st={x:r.left+r.width/2,y:r.top+r.height/2};mv(e)};el.ontouchmove=e=>{e.preventDefault();mv(e)};el.ontouchend=()=>{on=0;kn.style.transform='';cb(0,0)}}joy('move',(a,b)=>{keys.a=a<-.2;keys.d=a>.2;keys.w=b<-.2;keys.s=b>.2});joy('aim',(a,b)=>{if(state==='play'&&Math.hypot(a,b)>.2){player.a=Math.atan2(b,a);mouse.x=W/2+Math.cos(player.a)*200;mouse.y=H/2+Math.sin(player.a)*200}});q('fire').ontouchstart=e=>{e.preventDefault();shoot()};q('reload').ontouchstart=e=>{e.preventDefault();reload()};q('interact').ontouchstart=e=>{e.preventDefault();interact()};q('sprint').ontouchstart=e=>{e.preventDefault();keys.shift=1};q('sprint').ontouchend=e=>{e.preventDefault();keys.shift=0};
+addEventListener('gamepadconnected',e=>{if(deviceMode==='console')say('Controller connected: '+e.gamepad.id)});addEventListener('gamepaddisconnected',()=>{if(deviceMode==='console')say('Controller disconnected')});
+</script>
 </body>
 </html>
