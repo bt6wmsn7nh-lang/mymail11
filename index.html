@@ -1,62 +1,206 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>School Bus Escape 3D</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>School Bus Escape: 12 Nights</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a;color:#fff;font-family:Arial}
-canvas{width:100%;height:100%;display:block}
-.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(3,5,8,.96);z-index:20;padding:20px}
-.hidden{display:none!important}.card{width:min(850px,95vw);background:#111722;border:1px solid #2b3442;border-radius:20px;padding:25px}
-h1{font-size:clamp(38px,7vw,72px);margin:0}h1 span{color:#e44b55}p{color:#aeb8c4;line-height:1.5}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}.buses{grid-template-columns:repeat(5,1fr)}
-button{border:0;border-radius:13px;padding:16px;background:#273141;color:white;font-weight:900;cursor:pointer}
-button:hover{filter:brightness(1.15)}.primary{background:#c73540}.bus{background:#dca42d;color:#171108;min-height:90px}
-#hud{position:fixed;inset:0;pointer-events:none;z-index:10}.box{background:rgba(7,9,13,.82);border:1px solid #333b48;border-radius:12px;padding:10px}
-#top{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
-#left{position:absolute;top:75px;left:12px;width:min(330px,45vw)}#right{position:absolute;top:75px;right:12px;width:min(250px,38vw)}
-.label{font-size:11px;color:#9ea9b5;text-transform:uppercase}.value{font-weight:900;margin:4px 0}
-.bar{height:9px;background:#242a34;border-radius:20px;overflow:hidden}.fill{height:100%}
-#health{background:#52d68a}#noise{background:#e44b55}#task{background:#5ca8ff}
-#cross{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%)}
-#cross:before,#cross:after{content:"";position:absolute;background:white}#cross:before{width:2px;height:22px;left:10px}#cross:after{height:2px;width:22px;top:10px}
-#msg{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);opacity:0;transition:.2s;font-weight:900}#infoPanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,92vw);max-height:78vh;overflow:auto;padding:20px;pointer-events:auto;display:none}#infoPanel.open{display:block}#infoTabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}#infoTabs button{padding:10px 14px}#infoContent{line-height:1.6;color:#d7dee7}#mapCanvas{width:100%;max-width:520px;aspect-ratio:1.4;background:#080b10;border:1px solid #333b48;border-radius:12px;display:block;margin:auto}#rifle{position:absolute;right:8%;bottom:0;width:320px;height:180px;pointer-events:none}#rifle .stock{position:absolute;right:205px;bottom:18px;width:120px;height:42px;background:#20242a;border-radius:12px 5px 5px 12px;transform:skewX(-10deg)}#rifle .body{position:absolute;right:92px;bottom:40px;width:150px;height:52px;background:#2d3138;border-radius:8px;box-shadow:inset 0 0 0 3px #14171b}#rifle .barrel{position:absolute;right:8px;bottom:58px;width:110px;height:15px;background:#14171b;border-radius:4px}#rifle .mag{position:absolute;right:150px;bottom:0;width:36px;height:70px;background:#1a1d22;border-radius:4px;transform:skewX(-8deg)}#rifle .sight{position:absolute;right:145px;bottom:88px;width:52px;height:24px;border:5px solid #11151a;border-bottom:0;border-radius:8px 8px 0 0}#muzzleFlash{position:absolute;right:0;bottom:47px;width:42px;height:42px;background:radial-gradient(circle,#fff8b0 0 15%,#ffd84a 16% 42%,transparent 43%);opacity:0;filter:drop-shadow(0 0 12px #ffd84a)}#msg.show{opacity:1}
+:root{
+  --red:#e54850;--dark:#07090d;--panel:rgba(8,11,16,.9);--text:#eef2f7;
+  --muted:#9ca7b5;--green:#57d58d;--blue:#5faaff;--yellow:#ffd25c
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030406;color:var(--text);font-family:Inter,Arial,sans-serif}
+canvas{display:block;width:100vw;height:100vh;background:#000}
+.hidden{display:none!important}
+.screen{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:20px;background:#020305}
+.card{width:min(900px,94vw);padding:28px;background:linear-gradient(145deg,rgba(20,25,34,.97),rgba(8,11,16,.98));border:1px solid rgba(255,255,255,.08);border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,.65)}
+h1{font-size:clamp(40px,8vw,86px);line-height:.9;letter-spacing:-.06em;margin:0}
+h1 span{color:var(--red)}
+p{color:var(--muted);line-height:1.55}
+button{border:0;border-radius:14px;padding:15px 20px;background:#222a37;color:white;font-weight:900;cursor:pointer;transition:.18s}
+button:hover{transform:translateY(-2px);filter:brightness(1.12)}
+.primary{background:linear-gradient(135deg,var(--red),#9a1724)}
+#splash{overflow:hidden;background:#020305}
+#splashArt{position:absolute;inset:0;background:
+linear-gradient(rgba(2,3,5,.12),rgba(2,3,5,.55)),
+radial-gradient(circle at 60% 55%,rgba(255,220,120,.15),transparent 18%),
+linear-gradient(90deg,#0a1016 0 15%,#1c252e 15% 40%,#13181f 40% 65%,#06080c 65% 100%)}
+#splashArt:before{content:"";position:absolute;left:10%;right:10%;bottom:12%;height:44%;background:
+repeating-linear-gradient(90deg,transparent 0 9%,rgba(225,170,45,.9) 9% 12%,transparent 12% 19%),
+linear-gradient(#c89b27 0 35%,#222 35% 40%,#b07c13 40% 100%);clip-path:polygon(0 35%,12% 12%,82% 12%,100% 35%,100% 100%,0 100%);filter:drop-shadow(0 25px 35px #000)}
+#splashArt:after{content:"";position:absolute;right:18%;bottom:17%;width:120px;height:250px;background:#111318;border-radius:46% 46% 18% 18%;box-shadow:
+-55px 100px 0 -44px #111318,55px 100px 0 -44px #111318,
+-48px 155px 0 -45px #111318,48px 155px 0 -45px #111318,
+0 -25px 0 -25px #dfe8ff}
+.staticNoise{position:absolute;inset:-50%;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E");mix-blend-mode:screen;opacity:.22;animation:noise .18s steps(2) infinite;pointer-events:none}
+.scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 4px);pointer-events:none}
+@keyframes noise{0%{transform:translate(0,0)}25%{transform:translate(3%,-2%)}50%{transform:translate(-2%,3%)}75%{transform:translate(2%,2%)}100%{transform:translate(-3%,-1%)}}
+#splashContent{position:relative;z-index:2;text-align:center;text-shadow:0 7px 25px #000}
+#splashContent p{font-weight:800;letter-spacing:.18em;color:#d6dbe2}
+#deviceGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+#controlsText{margin-top:18px;padding:14px;background:#111722;border-radius:12px;color:#cbd3dc}
+#hud{position:fixed;inset:0;z-index:10;pointer-events:none}
+.box{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:12px;backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#topHud{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.hudItem{padding:10px 14px;font-weight:900}
+#objectiveTop{max-width:560px;text-align:center}
+#leftHud{position:absolute;left:12px;top:76px;width:min(350px,46vw)}
+#rightHud{position:absolute;right:12px;top:76px;width:min(265px,39vw)}
+.section{padding:12px}.label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:900}.value{font-weight:900;margin-top:4px}
+.bar{height:10px;background:#222936;border-radius:99px;overflow:hidden;margin-top:7px}.fill{height:100%;transition:.18s}
+#healthFill{background:var(--green)}#noiseFill{background:linear-gradient(90deg,var(--yellow),var(--red))}#taskFill{background:var(--blue)}
+#crosshair{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%)}
+#crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff;box-shadow:0 0 4px #000}
+#crosshair:before{width:2px;height:22px;left:10px}#crosshair:after{height:2px;width:22px;top:10px}
+#message{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);padding:13px 18px;font-weight:900;opacity:0;transition:.2s}
+#message.show{opacity:1}
+#boardPrompt{position:absolute;left:50%;bottom:10%;transform:translateX(-50%);padding:12px 18px;font-weight:900;display:none}
+#rifle{position:absolute;right:7%;bottom:-2px;width:360px;height:210px;transform-origin:75% 80%;transition:.16s transform}
+#rifle.ads{transform:translate(-34vw,35px) scale(1.08)}
+.stock{position:absolute;right:225px;bottom:22px;width:135px;height:46px;background:linear-gradient(#2c3138,#171a1f);border-radius:15px 5px 5px 15px;transform:skewX(-11deg);box-shadow:inset 0 0 0 3px #111419}
+.receiver{position:absolute;right:100px;bottom:50px;width:160px;height:58px;background:linear-gradient(#3a4048,#20242a);border-radius:8px;box-shadow:inset 0 0 0 3px #101318}
+.handguard{position:absolute;right:22px;bottom:56px;width:105px;height:38px;background:repeating-linear-gradient(90deg,#24282e 0 10px,#16191d 10px 14px);border-radius:5px}
+.barrel{position:absolute;right:0;bottom:68px;width:94px;height:12px;background:#0e1013;border-radius:4px}
+.mag{position:absolute;right:165px;bottom:0;width:40px;height:82px;background:linear-gradient(#24282e,#121417);border-radius:5px;transform:skewX(-8deg)}
+.grip{position:absolute;right:220px;bottom:2px;width:32px;height:74px;background:#1a1d22;border-radius:5px;transform:rotate(12deg)}
+.sight{position:absolute;right:148px;bottom:109px;width:64px;height:30px;border:6px solid #0f1216;border-bottom:0;border-radius:10px 10px 0 0}
+#muzzle{position:absolute;right:-10px;bottom:48px;width:55px;height:55px;opacity:0;background:radial-gradient(circle,#fff9c3 0 14%,#ffd63d 15% 42%,transparent 43%);filter:drop-shadow(0 0 16px #ffd63d)}
+#infoPanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,92vw);max-height:80vh;overflow:auto;padding:20px;pointer-events:auto;display:none}
+#infoPanel.open{display:block}#infoTabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}#mapCanvas{width:100%;max-width:520px;aspect-ratio:1.4;background:#080b10;border-radius:12px;display:block;margin:auto}
+#cinematic{position:fixed;inset:0;z-index:40;background:#020305;display:none;overflow:hidden}
+#cinCanvas{width:100%;height:100%}
+#cinText{position:absolute;left:50%;bottom:10%;transform:translateX(-50%);font-size:clamp(20px,4vw,42px);font-weight:950;text-align:center;text-shadow:0 5px 25px #000}
+#doorSlam{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;pointer-events:none}
+.slamDoor{width:50%;height:100%;background:linear-gradient(90deg,#6b4327,#3f2717);transform:translateX(-105%);transition:.55s transform cubic-bezier(.7,0,.3,1)}
+.slamDoor.right{transform:translateX(105%);border-left:5px solid #1b1009}.slamDoor.left{border-right:5px solid #1b1009}
+#doorSlam.closed .left,#doorSlam.closed .right{transform:translateX(0)}
 #mobile{position:absolute;inset:0;pointer-events:none}.joy{position:absolute;bottom:22px;width:120px;height:120px;border:2px solid #ffffff35;border-radius:50%;background:#0005;pointer-events:auto;touch-action:none}
 #moveJoy{left:18px}#aimJoy{right:18px}.knob{position:absolute;width:46px;height:46px;left:35px;top:35px;border-radius:50%;background:#ffffff44}
-.action{position:absolute;border-radius:50%;pointer-events:auto}.fire{right:38px;bottom:160px;background:#b62d37}.use{right:125px;bottom:145px;background:#376ba8}.reload{right:200px;bottom:128px;background:#3a4352}
-@media(min-width:900px){#mobile{display:none}}@media(max-width:720px){.grid{grid-template-columns:1fr}.buses{grid-template-columns:repeat(2,1fr)}}
+.action{position:absolute;border-radius:50%;pointer-events:auto;color:white}.fire{right:38px;bottom:160px;background:#b62d37}.use{right:125px;bottom:145px;background:#376ba8}.reload{right:200px;bottom:128px;background:#3a4352}.aim{right:128px;bottom:222px;background:#5b4a95}
+@media(min-width:900px){#mobile{display:none}}
+@media(max-width:760px){#deviceGrid{grid-template-columns:1fr}#leftHud{width:50vw}#rightHud{width:40vw}#rifle{width:300px;right:0;transform:scale(.85);transform-origin:100% 100%}#rifle.ads{transform:translate(-24vw,35px) scale(.95)}}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
-<div id="device" class="screen"><div class="card"><h1>Choose <span>Device</span></h1><p>Controls change based on your selection.</p><div class="grid"><button data-device="pc" class="primary">PC</button><button data-device="mobile" class="primary">Mobile</button><button data-device="console" class="primary">Console</button></div><p id="controls">Select a device.</p></div></div>
-<div id="menu" class="screen hidden"><div class="card"><h1>School Bus <span>Escape 3D</span></h1><p>Enter a bus, explore a first-person 3D school, open classroom doors, search the bathroom, complete objectives, and escape.</p><div class="grid buses"><button class="bus">BUS 1</button><button class="bus">BUS 2</button><button class="bus">BUS 3</button><button class="bus">BUS 4</button><button class="bus">BUS 5</button></div></div></div>
-<div id="loading" class="screen hidden"><div class="card"><h1>Loading <span>School</span></h1><p>The bus is leaving...</p></div></div>
-<div id="result" class="screen hidden"><div class="card"><h1 id="resultTitle">Round Over</h1><p id="resultText"></p><button id="again" class="primary">Return to Buses</button></div></div>
-<div id="hud" class="hidden">
-<div id="top"><div id="timer" class="box">05:00</div><div id="goal" class="box">COMPLETE ALL OBJECTIVES</div></div>
-<div id="left">
-<div class="box"><div class="label">Current Objective</div><div id="taskName" class="value"></div><div id="taskDesc" class="label"></div><div class="bar"><div id="task" class="fill"></div></div><div id="taskCount" class="label"></div></div>
-<div class="box" style="margin-top:8px"><div class="label">Health</div><div id="hpText" class="value"></div><div class="bar"><div id="health" class="fill"></div></div></div>
-<div class="box" style="margin-top:8px"><div class="label">Noise</div><div id="noiseText" class="value"></div><div class="bar"><div id="noise" class="fill"></div></div></div>
-</div>
-<div id="right"><div class="box"><div class="label">Objectives</div><div id="objectives" class="value" style="font-size:13px;line-height:1.8"></div></div><div class="box" style="margin-top:8px"><div class="label">Ammo</div><div id="ammo" class="value">12 / 12</div></div></div>
-<div id="cross"></div><div id="msg" class="box"></div><div id="infoPanel" class="box"><div id="infoTabs"><button id="mapTab">Map</button><button id="questTab">Quests</button><button id="timeTab">Time</button><button id="helpTab">How To</button><button id="closeInfo">Close</button></div><canvas id="mapCanvas" width="700" height="500"></canvas><div id="infoContent"></div></div><div id="rifle"><div class="stock"></div><div class="body"></div><div class="barrel"></div><div class="mag"></div><div class="sight"></div><div id="muzzleFlash"></div></div>
-<div id="mobile"><div id="moveJoy" class="joy"><div class="knob"></div></div><div id="aimJoy" class="joy"><div class="knob"></div></div><button id="fireBtn" class="action fire">FIRE</button><button id="useBtn" class="action use">OPEN</button><button id="reloadBtn" class="action reload">R</button></div>
-</div>
-<script>
-const c=document.getElementById('game'),x=c.getContext('2d');let W,H,D=Math.min(devicePixelRatio||1,2);
-function size(){W=innerWidth;H=innerHeight;c.width=W*D;c.height=H*D;x.setTransform(D,0,0,D,0,0)}addEventListener('resize',size);size();
-const S=id=>document.getElementById(id),screens=['device','menu','loading','result'];
-function show(id){screens.forEach(q=>S(q).classList.add('hidden'));if(id)S(id).classList.remove('hidden')}
-let device=localStorage.schoolDevice||'',state='menu',last=performance.now(),keys={},time=300,openExit=false,done=0;let infoMode='map';const audioCtx=new (window.AudioContext||window.webkitAudioContext)();function popSound(){try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.setValueAtTime(170,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(70,audioCtx.currentTime+.06);g.gain.setValueAtTime(.12,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.07);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.075)}catch(e){}}
-const help={pc:'WASD move • Mouse aim • Click shoot • E open doors/use objectives • R reload • Shift sprint',mobile:'Left joystick move • Right joystick aim • FIRE shoot • USE open doors/objectives • R reload',console:'Left stick move • Right stick aim • RT/R2 shoot • Square open doors/interact • X/Cross reload'};
-document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>{device=b.dataset.device;localStorage.schoolDevice=device;S('controls').textContent=help[device];S('mobile').style.display=device==='mobile'?'block':'none';show('menu')});
-if(device){S('mobile').style.display=device==='mobile'?'block':'none';show('menu')}
-document.querySelectorAll('.bus').forEach((b,i)=>b.onclick=()=>{show('loading');setTimeout(()=>start(i+1),1200)});
-S('again').onclick=()=>show('menu');
 
-const M=[
+<section id="splash" class="screen">
+  <div id="splashArt"></div><div class="staticNoise"></div><div class="scanlines"></div>
+  <div id="splashContent">
+    <h1>SCHOOL BUS <span>ESCAPE</span></h1>
+    <p>TWELVE NIGHTS INSIDE</p>
+    <button id="splashPlay" class="primary">PLAY</button>
+  </div>
+</section>
+
+<section id="deviceScreen" class="screen hidden">
+  <div class="card">
+    <h1>Choose <span>Device</span></h1>
+    <p>The game applies the correct keybinds and control layout.</p>
+    <div id="deviceGrid">
+      <button data-device="pc" class="primary">PC</button>
+      <button data-device="mobile" class="primary">Mobile</button>
+      <button data-device="console" class="primary">Console</button>
+    </div>
+    <div id="controlsText">Select a device.</div>
+  </div>
+</section>
+
+<section id="resultScreen" class="screen hidden">
+  <div class="card" style="text-align:center">
+    <h1 id="resultTitle">ROUND OVER</h1>
+    <p id="resultText"></p>
+    <button id="againBtn" class="primary">Return to Title</button>
+  </div>
+</section>
+
+<div id="cinematic">
+  <canvas id="cinCanvas"></canvas>
+  <div id="cinText">The bus is leaving...</div>
+  <div id="doorSlam"><div class="slamDoor left"></div><div class="slamDoor right"></div></div>
+</div>
+
+<div id="hud" class="hidden">
+  <div id="topHud">
+    <div id="nightBox" class="box hudItem">NIGHT 1 / 12</div>
+    <div id="timerBox" class="box hudItem">05:00</div>
+    <div id="objectiveTop" class="box hudItem">SURVIVE THE NIGHT</div>
+  </div>
+  <div id="leftHud">
+    <div class="box section">
+      <div class="label">Current Quest</div><div id="taskName" class="value"></div>
+      <div id="taskDesc" class="label"></div><div class="bar"><div id="taskFill" class="fill"></div></div>
+      <div id="taskCount" class="label"></div>
+    </div>
+    <div class="box section" style="margin-top:8px"><div class="label">Health</div><div id="hpText" class="value"></div><div class="bar"><div id="healthFill" class="fill"></div></div></div>
+    <div class="box section" style="margin-top:8px"><div class="label">Noise</div><div id="noiseText" class="value"></div><div class="bar"><div id="noiseFill" class="fill"></div></div></div>
+  </div>
+  <div id="rightHud">
+    <div class="box section"><div class="label">Quests</div><div id="objectiveList" class="value" style="font-size:13px;line-height:1.75"></div></div>
+    <div class="box section" style="margin-top:8px"><div class="label">Ammo</div><div id="ammoText" class="value">30 / 30</div></div>
+  </div>
+  <div id="crosshair"></div>
+  <div id="message" class="box"></div>
+  <div id="boardPrompt" class="box">Stand in the red circle</div>
+
+  <div id="rifle">
+    <div class="stock"></div><div class="receiver"></div><div class="handguard"></div>
+    <div class="barrel"></div><div class="mag"></div><div class="grip"></div><div class="sight"></div><div id="muzzle"></div>
+  </div>
+
+  <div id="infoPanel" class="box">
+    <div id="infoTabs"><button id="mapTab">Map</button><button id="questTab">Quests</button><button id="timeTab">Time</button><button id="helpTab">How To</button><button id="closeInfo">Close</button></div>
+    <canvas id="mapCanvas" width="700" height="500"></canvas><div id="infoContent"></div>
+  </div>
+
+  <div id="mobile">
+    <div id="moveJoy" class="joy"><div class="knob"></div></div>
+    <div id="aimJoy" class="joy"><div class="knob"></div></div>
+    <button id="fireBtn" class="action fire">FIRE</button><button id="useBtn" class="action use">USE</button>
+    <button id="reloadBtn" class="action reload">R</button><button id="aimBtn" class="action aim">AIM</button>
+  </div>
+</div>
+
+<script>
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),cinCanvas=document.getElementById('cinCanvas'),cctx=cinCanvas.getContext('2d');
+let W,H,D=Math.min(devicePixelRatio||1,2);
+function resize(){W=innerWidth;H=innerHeight;D=Math.min(devicePixelRatio||1,2);canvas.width=W*D;canvas.height=H*D;ctx.setTransform(D,0,0,D,0,0);cinCanvas.width=W*D;cinCanvas.height=H*D;cctx.setTransform(D,0,0,D,0,0)}addEventListener('resize',resize);resize();
+const S=id=>document.getElementById(id);
+const screens=['splash','deviceScreen','resultScreen'];
+function show(id){screens.forEach(q=>S(q).classList.add('hidden'));if(id)S(id).classList.remove('hidden')}
+let device=localStorage.schoolDevice||'',state='splash',last=performance.now(),keys={},mode='title';
+let player,monster,bots=[],shots=[],map=[],doors=[],objectives=[],night=1,timeLeft=300,done=0,exitOpen=false;
+let lobbyBuses=[],boardCountdown=0,boardBus=null,ads=false,baseSensitivity=.0025,currentSensitivity=.0025;
+const controls={
+pc:'WASD move • Mouse aim • Left click fire • Right click aim • E interact • R reload • Shift sprint • M map • Q quests',
+mobile:'Left joystick move • Right joystick aim • FIRE shoot • AIM slows aiming • USE interact • R reload',
+console:'Left stick move • Right stick aim • RT/R2 fire • LT/L2 aim • Square interact • Cross reload'
+};
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+function popSound(){try{audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.setValueAtTime(155,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(62,audioCtx.currentTime+.07);g.gain.setValueAtTime(.14,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.08);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.085)}catch(e){}}
+S('splashPlay').onclick=()=>{state='device';show('deviceScreen')};
+document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>{device=b.dataset.device;localStorage.schoolDevice=device;S('controlsText').textContent=controls[device];S('mobile').style.display=device==='mobile'?'block':'none';setTimeout(startForestLobby,250)});
+S('againBtn').onclick=()=>{state='splash';show('splash');S('hud').classList.add('hidden')};
+
+function startForestLobby(){
+  show();S('hud').classList.remove('hidden');state='lobby';mode='lobby';night=1;
+  map=createForestMap();doors=[];objectives=[];bots=[];shots=[];monster=null;player={x:18,y:26,a:-Math.PI/2,hp:100,maxHp:100,noise:0,ammo:30,maxAmmo:30,reload:false};
+  lobbyBuses=[
+    {x:6,y:7,id:1},{x:12,y:7,id:2},{x:18,y:7,id:3},{x:24,y:7,id:4},{x:30,y:7,id:5}
+  ];
+  boardCountdown=0;boardBus=null;S('boardPrompt').style.display='block';S('boardPrompt').textContent='Walk into a red circle near a bus';
+  S('nightBox').textContent='FOREST BUS LOBBY';S('timerBox').textContent='--:--';S('objectiveTop').textContent='CHOOSE A BUS IN 3D';
+  if(device==='pc')canvas.requestPointerLock?.();
+}
+function createForestMap(){
+  const w=37,h=29,g=Array.from({length:h},(_,y)=>Array.from({length:w},(_,x)=>(x===0||y===0||x===w-1||y===h-1)?'1':'.'));
+  for(let x=2;x<w-2;x+=3){g[3][x]='T';g[4][x]='T';}
+  for(let y=10;y<h-2;y+=3){g[y][2]='T';g[y][34]='T';}
+  for(let x=4;x<34;x++)g[12][x]='R';
+  return g;
+}
+const schoolTemplate=[
 "111111111111111111111111111111111111",
 "1....D......1.........1......D.....E1",
 "1.CCC.......1.........1.......CCC...1",
@@ -83,77 +227,129 @@ const M=[
 "1.TTT.......1.........1.......TTT...1",
 "1.TTT.......1.........1.......TTT...1",
 "111111111111111111111111111111111111"];
-let map,doors,obj,player,monster,bots=[],shots=[];
 const defs=[['Restore Power','Activate the classroom breaker'],['Bathroom Key','Search the bathroom sink'],['Disable Alarm','Use the office alarm panel'],['Exit Pass','Search the final classroom desk']];
-function start(){map=M.map(r=>r.split(''));doors=[];for(let y=0;y<map.length;y++)for(let z=0;z<map[0].length;z++)if(map[y][z]=='D'){doors.push({x:z,y,open:false});map[y][z]='d'}
-obj=[{x:5.5,y:3.5,d:0,ok:false},{x:6.5,y:23.5,d:1,ok:false},{x:29.5,y:23.5,d:2,ok:false},{x:29.5,y:14.5,d:3,ok:false}];
-player={x:18,y:23,a:-1.57,hp:100,noise:0,ammo:12,reload:false};monster={x:18,y:3,a:0};bots=[{x:5,y:8,hp:100},{x:30,y:8,hp:100},{x:7,y:18,hp:100}];shots=[];time=300;done=0;openExit=false;state='play';show();S('hud').classList.remove('hidden');updateHud();if(device==='pc')c.requestPointerLock?.()}
-function cell(a,b){return map[Math.floor(b)]?.[Math.floor(a)]||'1'}function solid(a,b){let q=cell(a,b);if('1CBSTL'.includes(q))return true;if(q==='d'){let d=doors.find(v=>v.x==Math.floor(a)&&v.y==Math.floor(b));return !d.open}return false}
+function buildSchool(){
+  map=schoolTemplate.map(r=>r.split(''));doors=[];for(let y=0;y<map.length;y++)for(let x=0;x<map[0].length;x++)if(map[y][x]==='D'){doors.push({x,y,open:false});map[y][x]='d'}
+  objectives=[{x:5.5,y:3.5,d:0,ok:false},{x:6.5,y:23.5,d:1,ok:false},{x:29.5,y:23.5,d:2,ok:false},{x:29.5,y:14.5,d:3,ok:false}];
+  player={x:18,y:23,a:-Math.PI/2,hp:100,maxHp:100,noise:0,ammo:30,maxAmmo:30,reload:false};
+  monster={x:18,y:3,a:0};bots=[{x:5,y:8,hp:100},{x:30,y:8,hp:100},{x:7,y:18,hp:100}];
+  shots=[];done=0;exitOpen=false;timeLeft=300;mode='school';state='play';
+  S('boardPrompt').style.display='none';updateHud();
+}
+function startBusCinematic(busId){
+  state='cinematic';S('hud').classList.add('hidden');document.exitPointerLock?.();S('cinematic').style.display='block';
+  let start=performance.now();
+  function scene(t){
+    const elapsed=(t-start)/1000;cctx.clearRect(0,0,W,H);
+    if(elapsed<3.2)drawTravelScene('forest',elapsed);
+    else if(elapsed<6.4)drawTravelScene('neighborhood',elapsed-3.2);
+    else if(elapsed<9.3)drawArrivalScene(elapsed-6.4);
+    else{
+      S('cinText').textContent='The doors slam shut behind you.';
+      S('doorSlam').classList.add('closed');
+      if(elapsed>10.6){
+        S('cinematic').style.display='none';S('doorSlam').classList.remove('closed');S('hud').classList.remove('hidden');buildSchool();if(device==='pc')canvas.requestPointerLock?.();return
+      }
+    }
+    requestAnimationFrame(scene)
+  }
+  requestAnimationFrame(scene)
+}
+function drawTravelScene(type,t){
+  const forest=type==='forest';
+  const bg=cctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,forest?'#101b25':'#6f8293');bg.addColorStop(1,forest?'#14231d':'#4c5b65');cctx.fillStyle=bg;cctx.fillRect(0,0,W,H);
+  cctx.fillStyle=forest?'#14291c':'#646a6f';cctx.fillRect(0,H*.62,W,H*.38);
+  const speed=t*220;
+  for(let i=0;i<14;i++){
+    let x=(i*180-speed)%(W+220)-110;
+    if(forest){cctx.fillStyle='#18231a';cctx.fillRect(x,H*.22,45,H*.42);cctx.fillStyle='#203d27';cctx.beginPath();cctx.arc(x+22,H*.2,70,0,Math.PI*2);cctx.fill()}
+    else{cctx.fillStyle=['#b4a38e','#8ca0ad','#a58d8d'][i%3];cctx.fillRect(x,H*.35,130,H*.27);cctx.fillStyle='#333';cctx.fillRect(x+22,H*.47,30,38);cctx.fillRect(x+75,H*.43,35,28)}
+  }
+  cctx.fillStyle='#d9a62b';cctx.fillRect(W*.28,H*.48,W*.44,H*.22);cctx.fillStyle='#203748';for(let i=0;i<6;i++)cctx.fillRect(W*.31+i*W*.065,H*.51,W*.05,H*.07);
+  cctx.fillStyle='#111';cctx.beginPath();cctx.arc(W*.36,H*.72,32,0,Math.PI*2);cctx.arc(W*.64,H*.72,32,0,Math.PI*2);cctx.fill();
+  S('cinText').textContent=forest?'The bus travels through the forest...':'The bus enters a quiet neighborhood...';
+}
+function drawArrivalScene(t){
+  cctx.fillStyle='#1a2028';cctx.fillRect(0,0,W,H);cctx.fillStyle='#92979c';cctx.fillRect(W*.18,H*.2,W*.64,H*.62);
+  cctx.fillStyle='#2a313a';for(let i=0;i<7;i++)cctx.fillRect(W*.22+i*W*.085,H*.28,W*.055,H*.12);
+  cctx.fillStyle='#69452c';cctx.fillRect(W*.45,H*.55,W*.1,H*.27);cctx.fillStyle='#75797e';cctx.fillRect(0,H*.82,W,H*.18);
+  const px=W*.5,py=H*.86-t*H*.09;cctx.fillStyle='#4d9fff';cctx.beginPath();cctx.arc(px,py,18,0,Math.PI*2);cctx.fill();
+  S('cinText').textContent='You get off the bus and walk to the school entrance...';
+}
+function cell(x,y){return map[Math.floor(y)]?.[Math.floor(x)]||'1'}
+function solid(x,y){const q=cell(x,y);if('1CBSTL'.includes(q))return true;if(q==='d'){const d=doors.find(v=>v.x===Math.floor(x)&&v.y===Math.floor(y));return !d?.open}return false}
 function move(e,dx,dy){if(!solid(e.x+dx,e.y))e.x+=dx;if(!solid(e.x,e.y+dy))e.y+=dy}
-function msg(t){S('msg').textContent=t;S('msg').classList.add('show');clearTimeout(msg.t);msg.t=setTimeout(()=>S('msg').classList.remove('show'),1500)}
-function use(){if(state!=='play')return;let d=doors.find(v=>Math.hypot(v.x+.5-player.x,v.y+.5-player.y)<1.2);if(d){d.open=!d.open;msg(d.open?'Door opened':'Door closed');return}for(let o of obj)if(!o.ok&&Math.hypot(o.x-player.x,o.y-player.y)<1){o.ok=true;done++;msg('Objective complete: '+defs[o.d][0]);if(done===obj.length){openExit=true;msg('Exit unlocked!')}updateHud();return}if(openExit&&cell(player.x,player.y)==='E')end(true,'You completed every objective and escaped.')}
-function reload(){if(state!=='play'||player.reload||player.ammo==12)return;player.reload=true;setTimeout(()=>{player.ammo=12;player.reload=false},1000)}
-function shoot(){if(state!=='play'||player.reload)return;if(player.ammo<=0)return reload();player.ammo--;player.noise=Math.min(100,player.noise+22);shots.push({x:player.x,y:player.y,dx:Math.cos(player.a)*8,dy:Math.sin(player.a)*8,t:1,owner:'p',yellow:true});popSound();const f=S('muzzleFlash');f.style.opacity=1;setTimeout(()=>f.style.opacity=0,60)}
-addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyE')use();if(e.code==='KeyR')reload();if(e.code==='KeyM')toggleInfo('map');if(e.code==='KeyQ')toggleInfo('quests');if(e.code==='Tab'){e.preventDefault();toggleInfo('time')}});addEventListener('keyup',e=>keys[e.code]=0);
-addEventListener('mousemove',e=>{if(state==='play'&&device==='pc'&&document.pointerLockElement)player.a+=e.movementX*.0025});addEventListener('mousedown',shoot);c.onclick=()=>device==='pc'&&c.requestPointerLock?.();
+function message(t){S('message').textContent=t;S('message').classList.add('show');clearTimeout(message.t);message.t=setTimeout(()=>S('message').classList.remove('show'),1700)}
+function use(){
+  if(mode==='lobby')return;
+  const d=doors.find(v=>Math.hypot(v.x+.5-player.x,v.y+.5-player.y)<1.2);if(d){d.open=!d.open;message(d.open?'Door opened':'Door closed');return}
+  for(const o of objectives)if(!o.ok&&Math.hypot(o.x-player.x,o.y-player.y)<1){o.ok=true;done++;message('Quest complete: '+defs[o.d][0]);if(done===objectives.length){exitOpen=true;message('All quests complete. Survive until the exit opens.')}updateHud();return}
+  if(exitOpen&&cell(player.x,player.y)==='E'&&night>=12)endGame(true,'You survived all 12 nights and escaped.')
+}
+function reload(){if(!player||player.reload||player.ammo===player.maxAmmo)return;player.reload=true;setTimeout(()=>{if(player){player.ammo=player.maxAmmo;player.reload=false}},1250)}
+function shoot(){if(state!=='play'||player.reload)return;if(player.ammo<=0)return reload();player.ammo--;player.noise=Math.min(100,player.noise+22);shots.push({x:player.x,y:player.y,dx:Math.cos(player.a)*9,dy:Math.sin(player.a)*9,t:1,owner:'p'});popSound();S('muzzle').style.opacity=1;setTimeout(()=>S('muzzle').style.opacity=0,55)}
+function setAds(v){ads=v;currentSensitivity=ads?baseSensitivity*.52:baseSensitivity;S('rifle').classList.toggle('ads',ads)}
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyE')use();if(e.code==='KeyR')reload();if(e.code==='KeyM')toggleInfo('map');if(e.code==='KeyQ')toggleInfo('quests')});
+addEventListener('keyup',e=>keys[e.code]=0);
+addEventListener('mousemove',e=>{if((state==='play'||state==='lobby')&&device==='pc'&&document.pointerLockElement)player.a+=e.movementX*currentSensitivity});
+addEventListener('mousedown',e=>{if(e.button===0)shoot();if(e.button===2)setAds(true)});addEventListener('mouseup',e=>{if(e.button===2)setAds(false)});addEventListener('contextmenu',e=>e.preventDefault());
+canvas.onclick=()=>device==='pc'&&canvas.requestPointerLock?.();
 
-function update(dt){if(state!=='play')return;time-=dt;if(time<=0)return end(false,'Time ran out.');
-let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD?1:0)-(keys.KeyA?1:0),sp=(keys.ShiftLeft?3.5:2.3);
-if(f||s){let l=Math.hypot(f,s);f/=l;s/=l;move(player,(Math.cos(player.a)*f+Math.cos(player.a+1.57)*s)*sp*dt,(Math.sin(player.a)*f+Math.sin(player.a+1.57)*s)*sp*dt);player.noise=Math.min(100,player.noise+(sp>3?11:4)*dt)}else player.noise=Math.max(0,player.noise-6*dt);
-gamepad();for(let b of bots){if(b.hp<=0)continue;let a=Math.atan2(player.y-b.y,player.x-b.x),d=Math.hypot(player.x-b.x,player.y-b.y);if(d<8){if(d>3)move(b,Math.cos(a)*dt,Math.sin(a)*dt);if(Math.random()<dt*.7)shots.push({x:b.x,y:b.y,dx:Math.cos(a)*6,dy:Math.sin(a)*6,t:1,owner:b})}}
-let target=player,loud=player.noise;if(loud>14){let a=Math.atan2(target.y-monster.y,target.x-monster.x);monster.a=a;move(monster,Math.cos(a)*(2.9+loud*.015)*dt,Math.sin(a)*(2.9+loud*.015)*dt);if(Math.hypot(monster.x-player.x,monster.y-player.y)<.55){player.hp-=28*dt;if(player.hp<=0)end(false,'The monster caught you.')}}for(let i=shots.length-1;i>=0;i--){let b=shots[i];b.x+=b.dx*dt;b.y+=b.dy*dt;b.t-=dt;if(b.t<0||solid(b.x,b.y)){shots.splice(i,1);continue}if(b.owner==='p'){for(let z of bots)if(z.hp>0&&Math.hypot(z.x-b.x,z.y-b.y)<.3){z.hp-=45;shots.splice(i,1);break}}else if(Math.hypot(player.x-b.x,player.y-b.y)<.3){player.hp-=18;shots.splice(i,1);if(player.hp<=0)end(false,'You were eliminated.')}}updateHud()}
-function gamepad(){if(device!=='console')return;let g=navigator.getGamepads?.()[0];if(!g)return;player.a+=(Math.abs(g.axes[2])>.15?g.axes[2]*.045:0);let lx=g.axes[0]||0,ly=g.axes[1]||0;if(Math.hypot(lx,ly)>.15)move(player,(Math.cos(player.a)*-ly+Math.cos(player.a+1.57)*lx)*.05,(Math.sin(player.a)*-ly+Math.sin(player.a+1.57)*lx)*.05);if(g.buttons[7]?.pressed)shoot();if(g.buttons[2]?.pressed)use();if(g.buttons[0]?.pressed)reload()}
+function update(dt){
+  if(state!=='play'&&state!=='lobby')return;
+  let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD?1:0)-(keys.KeyA?1:0),sp=(keys.ShiftLeft?3.5:2.3);
+  if(f||s){let l=Math.hypot(f,s);f/=l;s/=l;move(player,(Math.cos(player.a)*f+Math.cos(player.a+Math.PI/2)*s)*sp*dt,(Math.sin(player.a)*f+Math.sin(player.a+Math.PI/2)*s)*sp*dt);player.noise=Math.min(100,player.noise+(sp>3?11:4)*dt)}else player.noise=Math.max(0,player.noise-6*dt);
+  gamepad();
+  if(mode==='lobby')updateLobby(dt);else updateSchool(dt);
+}
+function updateLobby(dt){
+  let near=null;for(const b of lobbyBuses)if(Math.hypot(player.x-b.x,player.y-(b.y+2.2))<1.15){near=b;break}
+  if(near){
+    if(boardBus!==near){boardBus=near;boardCountdown=6}
+    boardCountdown-=dt;S('boardPrompt').style.display='block';S('boardPrompt').textContent=`BUS ${near.id} LEAVES IN ${Math.ceil(boardCountdown)}...`;
+    if(boardCountdown<=0)startBusCinematic(near.id)
+  }else{boardBus=null;boardCountdown=0;S('boardPrompt').textContent='Walk into a red circle near a bus'}
+}
+function updateSchool(dt){
+  timeLeft-=dt;if(timeLeft<=0){
+    if(night<12){night++;timeLeft=300;player.hp=Math.min(player.maxHp,player.hp+25);message(`Night ${night} begins.`)}
+    else{exitOpen=true;message('Night 12 survived. Reach the exit!')}
+  }
+  for(const b of bots){if(b.hp<=0)continue;let a=Math.atan2(player.y-b.y,player.x-b.x),d=Math.hypot(player.x-b.x,player.y-b.y);if(d<8){if(d>3)move(b,Math.cos(a)*dt,Math.sin(a)*dt);if(Math.random()<dt*.7)shots.push({x:b.x,y:b.y,dx:Math.cos(a)*6,dy:Math.sin(a)*6,t:1,owner:b})}}
+  let loud=player.noise;if(loud>14){let a=Math.atan2(player.y-monster.y,player.x-monster.x);monster.a=a;move(monster,Math.cos(a)*(3.0+loud*.015)*dt,Math.sin(a)*(3.0+loud*.015)*dt);if(Math.hypot(monster.x-player.x,monster.y-player.y)<.55){player.hp-=30*dt;if(player.hp<=0)endGame(false,'The monster caught you.')}} 
+  for(let i=shots.length-1;i>=0;i--){let b=shots[i];b.x+=b.dx*dt;b.y+=b.dy*dt;b.t-=dt;if(b.t<0||solid(b.x,b.y)){shots.splice(i,1);continue}if(b.owner==='p'){for(const z of bots)if(z.hp>0&&Math.hypot(z.x-b.x,z.y-b.y)<.3){z.hp-=45;shots.splice(i,1);break}}else if(Math.hypot(player.x-b.x,player.y-b.y)<.3){player.hp-=18;shots.splice(i,1);if(player.hp<=0)endGame(false,'You were eliminated.')}}
+  updateHud()
+}
+function gamepad(){if(device!=='console')return;const g=navigator.getGamepads?.()[0];if(!g)return;setAds(!!g.buttons[6]?.pressed);player.a+=(Math.abs(g.axes[2])>.15?g.axes[2]*(ads?.022:.045):0);let lx=g.axes[0]||0,ly=g.axes[1]||0;if(Math.hypot(lx,ly)>.15)move(player,(Math.cos(player.a)*-ly+Math.cos(player.a+Math.PI/2)*lx)*.05,(Math.sin(player.a)*-ly+Math.sin(player.a+Math.PI/2)*lx)*.05);if(g.buttons[7]?.pressed)shoot();if(g.buttons[2]?.pressed)use();if(g.buttons[0]?.pressed)reload()}
 function cast(a){let d=0,xx=player.x,yy=player.y,h='1';while(d<24){xx+=Math.cos(a)*.02;yy+=Math.sin(a)*.02;d+=.02;h=cell(xx,yy);if(solid(xx,yy)||h==='E')break}return{d,h}}
-function render(){let sky=x.createLinearGradient(0,0,0,H/2);sky.addColorStop(0,'#101722');sky.addColorStop(1,'#29313a');x.fillStyle=sky;x.fillRect(0,0,W,H/2);let fl=x.createLinearGradient(0,H/2,0,H);fl.addColorStop(0,'#45494f');fl.addColorStop(1,'#111318');x.fillStyle=fl;x.fillRect(0,H/2,W,H/2);
-let F=1.047,rays=Math.min(W,500),sw=W/rays;for(let i=0;i<rays;i++){let a=player.a-F/2+i/rays*F,r=cast(a),d=r.d*Math.cos(a-player.a),hh=Math.min(H*1.6,H/(d+.001)),yy=H/2-hh/2,col='#b7b3aa';if(r.h==='d')col='#7a4d2e';else if(r.h==='C')col='#79583b';else if(r.h==='R')col='#9fa6ac';else if(r.h==='L')col='#526f84';else if(r.h==='E')col=openExit?'#3dcc7c':'#a02d38';let sh=Math.max(.22,1-d/22);x.fillStyle=shade(col,sh);x.fillRect(i*sw,yy,sw+1,hh)}sprites()}
+function render(){let sky=ctx.createLinearGradient(0,0,0,H/2);sky.addColorStop(0,mode==='lobby'?'#17232b':'#101722');sky.addColorStop(1,mode==='lobby'?'#26362e':'#29313a');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H/2);let fl=ctx.createLinearGradient(0,H/2,0,H);fl.addColorStop(0,mode==='lobby'?'#314238':'#45494f');fl.addColorStop(1,'#111318');ctx.fillStyle=fl;ctx.fillRect(0,H/2,W,H/2);
+  const F=ads?.72:1.047,rays=Math.min(W,520),sw=W/rays;for(let i=0;i<rays;i++){let a=player.a-F/2+i/rays*F,r=cast(a),d=r.d*Math.cos(a-player.a),hh=Math.min(H*1.6,H/(d+.001)),yy=H/2-hh/2,col='#b7b3aa';if(r.h==='d')col='#7a4d2e';else if(r.h==='C')col='#79583b';else if(r.h==='R')col='#9fa6ac';else if(r.h==='L')col='#526f84';else if(r.h==='T')col='#19351f';else if(r.h==='E')col=exitOpen?'#3dcc7c':'#a02d38';let sh=Math.max(.2,1-d/22);ctx.fillStyle=shade(col,sh);ctx.fillRect(i*sw,yy,sw+1,hh)}
+  sprites()
+}
 function shade(h,m){let n=parseInt(h.slice(1),16);return`rgb(${((n>>16)&255)*m},${((n>>8)&255)*m},${(n&255)*m})`}
-function proj(wx,wy){let dx=wx-player.x,dy=wy-player.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx)-player.a;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)>.55)return null;return{x:W/2+Math.tan(a)*(W/1.15),d}}
-function sprites(){let arr=[];obj.filter(o=>!o.ok).forEach(o=>arr.push({...o,t:'o'}));bots.filter(b=>b.hp>0).forEach(b=>arr.push({...b,t:'b'}));shots.forEach(b=>arr.push({...b,t:'shot'}));arr.push({x:monster.x,y:monster.y,t:'m'});arr.sort((a,b)=>Math.hypot(b.x-player.x,b.y-player.y)-Math.hypot(a.x-player.x,a.y-player.y));for(let s of arr){let p=proj(s.x,s.y);if(!p)continue;let z=Math.min(H*.8,H/p.d);if(s.t==='o'){x.fillStyle='#5ca8ff';x.beginPath();x.arc(p.x,H/2,z*.12,0,7);x.fill();x.fillStyle='#fff';x.fillText('!',p.x,H/2)}if(s.t==='b'){x.fillStyle='#d0a05d';x.fillRect(p.x-z*.12,H/2-z*.3,z*.24,z*.48)}if(s.t==='shot'){x.fillStyle='#ffd84a';x.beginPath();x.arc(p.x,H/2,Math.max(3,z*.025),0,Math.PI*2);x.fill();}
-if(s.t==='m'){x.save();x.translate(p.x,H/2);x.strokeStyle='#121318';x.lineWidth=Math.max(2,z*.03);for(let i=0;i<6;i++){let side=i%2?1:-1,row=Math.floor(i/2)-1;x.beginPath();x.moveTo(side*z*.05,row*z*.08);x.lineTo(side*z*.18,row*z*.14);x.lineTo(side*z*.32,row*z*.22);x.stroke()}x.fillStyle='#202229';x.fillRect(-z*.05,-z*.34,z*.1,z*.68);x.restore()}}}
-function updateHud(){S('timer').textContent=`${String(Math.floor(time/60)).padStart(2,'0')}:${String(Math.floor(time%60)).padStart(2,'0')}`;S('hpText').textContent=`${Math.ceil(player.hp)} / 100`;S('health').style.width=Math.max(0,player.hp)+'%';S('noiseText').textContent=Math.floor(player.noise);S('noise').style.width=player.noise+'%';S('ammo').textContent=player.reload?'RELOADING':`${player.ammo} / 12`;S('task').style.width=done/obj.length*100+'%';S('taskCount').textContent=`${done} / ${obj.length}`;let next=obj.find(o=>!o.ok);S('taskName').textContent=next?defs[next.d][0]:'Escape';S('taskDesc').textContent=next?defs[next.d][1]:'Reach the exit';S('objectives').innerHTML=obj.map(o=>(o.ok?'✓ ':'○ ')+defs[o.d][0]).join('<br>');S('goal').textContent=openExit?'ALL OBJECTIVES COMPLETE — ESCAPE':'COMPLETE ALL OBJECTIVES'}
-function end(win,t){state='end';S('hud').classList.add('hidden');document.exitPointerLock?.();S('resultTitle').textContent=win?'YOU ESCAPED':'ROUND OVER';S('resultText').textContent=t;show('result')}
+function proj(wx,wy){let dx=wx-player.x,dy=wy-player.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx)-player.a;a=Math.atan2(Math.sin(a),Math.cos(a));const F=ads?.72:1.047;if(Math.abs(a)>F/2)return null;return{x:W/2+Math.tan(a)*(W/(2*Math.tan(F/2))),d}}
+function sprites(){
+  let arr=[];
+  if(mode==='lobby'){for(const b of lobbyBuses){arr.push({x:b.x,y:b.y,t:'bus',id:b.id});arr.push({x:b.x,y:b.y+2.2,t:'circle',id:b.id})}}
+  else{objectives.filter(o=>!o.ok).forEach(o=>arr.push({...o,t:'o'}));bots.filter(b=>b.hp>0).forEach(b=>arr.push({...b,t:'b'}));shots.forEach(b=>arr.push({...b,t:'shot'}));arr.push({x:monster.x,y:monster.y,t:'m'})}
+  arr.sort((a,b)=>Math.hypot(b.x-player.x,b.y-player.y)-Math.hypot(a.x-player.x,a.y-player.y));
+  for(const s of arr){const p=proj(s.x,s.y);if(!p||p.d<.2)continue;const z=Math.min(H*.9,H/p.d);
+    if(s.t==='bus'){ctx.fillStyle='#d9a52a';ctx.fillRect(p.x-z*.42,H/2-z*.3,z*.84,z*.46);ctx.fillStyle='#203748';for(let i=0;i<5;i++)ctx.fillRect(p.x-z*.34+i*z*.15,H/2-z*.24,z*.11,z*.1);ctx.fillStyle='#111';ctx.beginPath();ctx.arc(p.x-z*.28,H/2+z*.17,z*.08,0,Math.PI*2);ctx.arc(p.x+z*.28,H/2+z*.17,z*.08,0,Math.PI*2);ctx.fill()}
+    if(s.t==='circle'){ctx.strokeStyle='#ff394c';ctx.lineWidth=Math.max(3,z*.035);ctx.beginPath();ctx.ellipse(p.x,H/2+z*.22,z*.24,z*.09,0,0,Math.PI*2);ctx.stroke()}
+    if(s.t==='o'){ctx.fillStyle='#5ca8ff';ctx.beginPath();ctx.arc(p.x,H/2,z*.12,0,Math.PI*2);ctx.fill()}
+    if(s.t==='b'){ctx.fillStyle='#d0a05d';ctx.fillRect(p.x-z*.12,H/2-z*.3,z*.24,z*.48)}
+    if(s.t==='shot'){ctx.fillStyle='#ffd83e';ctx.beginPath();ctx.arc(p.x,H/2,Math.max(3,z*.025),0,Math.PI*2);ctx.fill()}
+    if(s.t==='m'){ctx.save();ctx.translate(p.x,H/2);ctx.strokeStyle='#121318';ctx.lineWidth=Math.max(2,z*.03);for(let i=0;i<6;i++){let side=i%2?1:-1,row=Math.floor(i/2)-1;ctx.beginPath();ctx.moveTo(side*z*.05,row*z*.08);ctx.lineTo(side*z*.18,row*z*.14);ctx.lineTo(side*z*.32,row*z*.22);ctx.stroke()}ctx.fillStyle='#202229';ctx.fillRect(-z*.05,-z*.34,z*.1,z*.68);ctx.restore()}
+  }
+}
+function updateHud(){S('nightBox').textContent=`NIGHT ${night} / 12`;S('timerBox').textContent=`${String(Math.max(0,Math.floor(timeLeft/60))).padStart(2,'0')}:${String(Math.max(0,Math.floor(timeLeft%60))).padStart(2,'0')}`;S('hpText').textContent=`${Math.ceil(player.hp)} / ${player.maxHp}`;S('healthFill').style.width=Math.max(0,player.hp/player.maxHp*100)+'%';S('noiseText').textContent=Math.floor(player.noise);S('noiseFill').style.width=player.noise+'%';S('ammoText').textContent=player.reload?'RELOADING':`${player.ammo} / ${player.maxAmmo}`;S('taskFill').style.width=done/objectives.length*100+'%';S('taskCount').textContent=`${done} / ${objectives.length}`;let next=objectives.find(o=>!o.ok);S('taskName').textContent=next?defs[next.d][0]:'Survive';S('taskDesc').textContent=next?defs[next.d][1]:'Survive through Night 12';S('objectiveList').innerHTML=objectives.map(o=>(o.ok?'✓ ':'○ ')+defs[o.d][0]).join('<br>');S('objectiveTop').textContent=night>=12&&exitOpen?'REACH THE EXIT':'SURVIVE 12 NIGHTS'}
+function toggleInfo(kind){const p=S('infoPanel');p.classList.toggle('open');if(!p.classList.contains('open'))return;S('mapCanvas').style.display=kind==='map'?'block':'none';if(kind==='map'){S('infoContent').innerHTML='<h2>School Map</h2><p>Blue: you. Red: monster. Yellow: unfinished quests.</p>';drawMap()}else if(kind==='quests'){S('infoContent').innerHTML='<h2>Quests</h2>'+objectives.map(o=>`<p>${o.ok?'✓':'○'} <b>${defs[o.d][0]}</b><br>${defs[o.d][1]}</p>`).join('')}else{S('infoContent').innerHTML=`<h2>Night ${night} of 12</h2><p>${S('timerBox').textContent} remains in this night.</p><p>Each night lasts five minutes.</p>`}}
+function drawMap(){const mc=S('mapCanvas'),m=mc.getContext('2d'),sx=mc.width/map[0].length,sy=mc.height/map.length;m.clearRect(0,0,mc.width,mc.height);for(let y=0;y<map.length;y++)for(let x=0;x<map[0].length;x++){const q=map[y][x];m.fillStyle=q==='1'?'#8b8f95':q==='d'?'#7a4d2e':'#202631';m.fillRect(x*sx,y*sy,sx,sy)}const dot=(x,y,c)=>{m.fillStyle=c;m.beginPath();m.arc(x*sx,y*sy,7,0,Math.PI*2);m.fill()};objectives.filter(o=>!o.ok).forEach(o=>dot(o.x,o.y,'#ffd84a'));dot(player.x,player.y,'#58a6ff');dot(monster.x,monster.y,'#e34b55')}
+S('mapTab').onclick=()=>toggleInfo('map');S('questTab').onclick=()=>toggleInfo('quests');S('timeTab').onclick=()=>toggleInfo('time');S('helpTab').onclick=()=>{S('infoPanel').classList.add('open');S('mapCanvas').style.display='none';S('infoContent').innerHTML='<h2>How To Play</h2><p>Complete all four quests, stay quiet, and survive twelve five-minute nights. The monster chases loud sounds. Aim to slow sensitivity and tighten your view.</p>'};S('closeInfo').onclick=()=>S('infoPanel').classList.remove('open');
+function endGame(win,t){state='end';S('hud').classList.add('hidden');document.exitPointerLock?.();S('resultTitle').textContent=win?'YOU ESCAPED':'ROUND OVER';S('resultText').textContent=t;show('result')}
 function joy(id,cb){let e=S(id),k=e.querySelector('.knob'),on=0,cx=0,cy=0;e.ontouchstart=q=>{on=1;let r=e.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2};e.ontouchmove=q=>{q.preventDefault();if(!on)return;let t=q.touches[0],dx=t.clientX-cx,dy=t.clientY-cy,m=Math.hypot(dx,dy),mx=40;if(m>mx){dx=dx/m*mx;dy=dy/m*mx}k.style.transform=`translate(${dx}px,${dy}px)`;cb(dx/mx,dy/mx)};e.ontouchend=()=>{on=0;k.style.transform='';cb(0,0)}}
-joy('moveJoy',(a,b)=>{keys.KeyW=b<-.2;keys.KeyS=b>.2;keys.KeyA=a<-.2;keys.KeyD=a>.2});joy('aimJoy',(a,b)=>{if(player&&Math.hypot(a,b)>.2)player.a=Math.atan2(b,a)});S('fireBtn').ontouchstart=shoot;S('useBtn').ontouchstart=use;S('reloadBtn').ontouchstart=reload;
-
-function toggleInfo(mode){
-  infoMode=mode||infoMode;
-  const p=S('infoPanel');
-  p.classList.toggle('open');
-  if(p.classList.contains('open')) renderInfo();
-}
-function renderInfo(){
-  const content=S('infoContent');
-  const mapCanvas=S('mapCanvas');
-  mapCanvas.style.display=infoMode==='map'?'block':'none';
-  if(infoMode==='map'){
-    content.innerHTML='<h2>School Map</h2><p>Blue dot: you. Red dot: monster. Green: exit. Yellow: objectives.</p>';
-    drawInfoMap();
-  }else if(infoMode==='quests'){
-    content.innerHTML='<h2>Quests</h2>'+obj.map(o=>`<p>${o.ok?'✓':'○'} <b>${defs[o.d][0]}</b><br>${defs[o.d][1]}</p>`).join('');
-  }else if(infoMode==='time'){
-    content.innerHTML=`<h2>Time Left</h2><p style="font-size:44px;font-weight:900">${S('timer').textContent}</p><p>${openExit?'The exit is open.':'Complete every objective to unlock the exit.'}</p>`;
-  }else{
-    content.innerHTML='<h2>How To Complete Quests</h2><p>Walk near glowing blue objective markers and press <b>E</b> on PC, <b>OPEN</b> on mobile, or <b>Square</b> on console.</p><p>Brown classroom doors use the same button. Search the classroom breaker, bathroom sink, office alarm panel, and final classroom desk.</p><p><b>Panel shortcuts:</b> M = map, Q = quests, Tab = time.</p>';
-  }
-}
-function drawInfoMap(){
-  const mc=S('mapCanvas'),mx=mc.getContext('2d');mx.clearRect(0,0,mc.width,mc.height);
-  const sx=mc.width/map[0].length,sy=mc.height/map.length;
-  for(let yy=0;yy<map.length;yy++)for(let xx=0;xx<map[0].length;xx++){
-    const q=map[yy][xx];mx.fillStyle=q==='1'?'#8b8f95':q==='d'?'#7a4d2e':'#202631';mx.fillRect(xx*sx,yy*sy,sx,sy);
-  }
-  const dot=(px,py,c,r=6)=>{mx.fillStyle=c;mx.beginPath();mx.arc(px*sx,py*sy,r,0,Math.PI*2);mx.fill()};
-  obj.filter(o=>!o.ok).forEach(o=>dot(o.x,o.y,'#ffd84a',6));
-  dot(player.x,player.y,'#58a6ff',7);dot(monster.x,monster.y,'#e34b55',7);
-  mx.fillStyle=openExit?'#58d58d':'#8c2b35';mx.fillRect((map[0].length-2)*sx,1*sy,sx,sy);
-}
-S('mapTab').onclick=()=>{infoMode='map';renderInfo()};
-S('questTab').onclick=()=>{infoMode='quests';renderInfo()};
-S('timeTab').onclick=()=>{infoMode='time';renderInfo()};
-S('helpTab').onclick=()=>{infoMode='help';renderInfo()};
-S('closeInfo').onclick=()=>S('infoPanel').classList.remove('open');
-
-function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;update(dt);if(state==='play')render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+joy('moveJoy',(a,b)=>{keys.KeyW=b<-.2;keys.KeyS=b>.2;keys.KeyA=a<-.2;keys.KeyD=a>.2});joy('aimJoy',(a,b)=>{if(player&&Math.hypot(a,b)>.2)player.a=Math.atan2(b,a)});S('fireBtn').ontouchstart=e=>{e.preventDefault();shoot()};S('useBtn').ontouchstart=e=>{e.preventDefault();use()};S('reloadBtn').ontouchstart=e=>{e.preventDefault();reload()};S('aimBtn').ontouchstart=e=>{e.preventDefault();setAds(!ads)};
+function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;update(dt);if(state==='play'||state==='lobby')render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 </script>
 </body>
 </html>
