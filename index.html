@@ -20,7 +20,7 @@ button:hover{filter:brightness(1.15)}.primary{background:#c73540}.bus{background
 #health{background:#52d68a}#noise{background:#e44b55}#task{background:#5ca8ff}
 #cross{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%)}
 #cross:before,#cross:after{content:"";position:absolute;background:white}#cross:before{width:2px;height:22px;left:10px}#cross:after{height:2px;width:22px;top:10px}
-#msg{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);opacity:0;transition:.2s;font-weight:900}#msg.show{opacity:1}
+#msg{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);opacity:0;transition:.2s;font-weight:900}#infoPanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,92vw);max-height:78vh;overflow:auto;padding:20px;pointer-events:auto;display:none}#infoPanel.open{display:block}#infoTabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}#infoTabs button{padding:10px 14px}#infoContent{line-height:1.6;color:#d7dee7}#mapCanvas{width:100%;max-width:520px;aspect-ratio:1.4;background:#080b10;border:1px solid #333b48;border-radius:12px;display:block;margin:auto}#rifle{position:absolute;right:8%;bottom:0;width:320px;height:180px;pointer-events:none}#rifle .stock{position:absolute;right:205px;bottom:18px;width:120px;height:42px;background:#20242a;border-radius:12px 5px 5px 12px;transform:skewX(-10deg)}#rifle .body{position:absolute;right:92px;bottom:40px;width:150px;height:52px;background:#2d3138;border-radius:8px;box-shadow:inset 0 0 0 3px #14171b}#rifle .barrel{position:absolute;right:8px;bottom:58px;width:110px;height:15px;background:#14171b;border-radius:4px}#rifle .mag{position:absolute;right:150px;bottom:0;width:36px;height:70px;background:#1a1d22;border-radius:4px;transform:skewX(-8deg)}#rifle .sight{position:absolute;right:145px;bottom:88px;width:52px;height:24px;border:5px solid #11151a;border-bottom:0;border-radius:8px 8px 0 0}#muzzleFlash{position:absolute;right:0;bottom:47px;width:42px;height:42px;background:radial-gradient(circle,#fff8b0 0 15%,#ffd84a 16% 42%,transparent 43%);opacity:0;filter:drop-shadow(0 0 12px #ffd84a)}#msg.show{opacity:1}
 #mobile{position:absolute;inset:0;pointer-events:none}.joy{position:absolute;bottom:22px;width:120px;height:120px;border:2px solid #ffffff35;border-radius:50%;background:#0005;pointer-events:auto;touch-action:none}
 #moveJoy{left:18px}#aimJoy{right:18px}.knob{position:absolute;width:46px;height:46px;left:35px;top:35px;border-radius:50%;background:#ffffff44}
 .action{position:absolute;border-radius:50%;pointer-events:auto}.fire{right:38px;bottom:160px;background:#b62d37}.use{right:125px;bottom:145px;background:#376ba8}.reload{right:200px;bottom:128px;background:#3a4352}
@@ -41,16 +41,16 @@ button:hover{filter:brightness(1.15)}.primary{background:#c73540}.bus{background
 <div class="box" style="margin-top:8px"><div class="label">Noise</div><div id="noiseText" class="value"></div><div class="bar"><div id="noise" class="fill"></div></div></div>
 </div>
 <div id="right"><div class="box"><div class="label">Objectives</div><div id="objectives" class="value" style="font-size:13px;line-height:1.8"></div></div><div class="box" style="margin-top:8px"><div class="label">Ammo</div><div id="ammo" class="value">12 / 12</div></div></div>
-<div id="cross"></div><div id="msg" class="box"></div>
-<div id="mobile"><div id="moveJoy" class="joy"><div class="knob"></div></div><div id="aimJoy" class="joy"><div class="knob"></div></div><button id="fireBtn" class="action fire">FIRE</button><button id="useBtn" class="action use">USE</button><button id="reloadBtn" class="action reload">R</button></div>
+<div id="cross"></div><div id="msg" class="box"></div><div id="infoPanel" class="box"><div id="infoTabs"><button id="mapTab">Map</button><button id="questTab">Quests</button><button id="timeTab">Time</button><button id="helpTab">How To</button><button id="closeInfo">Close</button></div><canvas id="mapCanvas" width="700" height="500"></canvas><div id="infoContent"></div></div><div id="rifle"><div class="stock"></div><div class="body"></div><div class="barrel"></div><div class="mag"></div><div class="sight"></div><div id="muzzleFlash"></div></div>
+<div id="mobile"><div id="moveJoy" class="joy"><div class="knob"></div></div><div id="aimJoy" class="joy"><div class="knob"></div></div><button id="fireBtn" class="action fire">FIRE</button><button id="useBtn" class="action use">OPEN</button><button id="reloadBtn" class="action reload">R</button></div>
 </div>
 <script>
 const c=document.getElementById('game'),x=c.getContext('2d');let W,H,D=Math.min(devicePixelRatio||1,2);
 function size(){W=innerWidth;H=innerHeight;c.width=W*D;c.height=H*D;x.setTransform(D,0,0,D,0,0)}addEventListener('resize',size);size();
 const S=id=>document.getElementById(id),screens=['device','menu','loading','result'];
 function show(id){screens.forEach(q=>S(q).classList.add('hidden'));if(id)S(id).classList.remove('hidden')}
-let device=localStorage.schoolDevice||'',state='menu',last=performance.now(),keys={},time=300,openExit=false,done=0;
-const help={pc:'WASD move • Mouse aim • Click shoot • E open doors/use objectives • R reload • Shift sprint',mobile:'Left joystick move • Right joystick aim • FIRE shoot • USE open doors/objectives • R reload',console:'Left stick move • Right stick aim • RT/R2 shoot • A/Cross interact • X/Square reload'};
+let device=localStorage.schoolDevice||'',state='menu',last=performance.now(),keys={},time=300,openExit=false,done=0;let infoMode='map';const audioCtx=new (window.AudioContext||window.webkitAudioContext)();function popSound(){try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.setValueAtTime(170,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(70,audioCtx.currentTime+.06);g.gain.setValueAtTime(.12,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.07);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.075)}catch(e){}}
+const help={pc:'WASD move • Mouse aim • Click shoot • E open doors/use objectives • R reload • Shift sprint',mobile:'Left joystick move • Right joystick aim • FIRE shoot • USE open doors/objectives • R reload',console:'Left stick move • Right stick aim • RT/R2 shoot • Square open doors/interact • X/Cross reload'};
 document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>{device=b.dataset.device;localStorage.schoolDevice=device;S('controls').textContent=help[device];S('mobile').style.display=device==='mobile'?'block':'none';show('menu')});
 if(device){S('mobile').style.display=device==='mobile'?'block':'none';show('menu')}
 document.querySelectorAll('.bus').forEach((b,i)=>b.onclick=()=>{show('loading');setTimeout(()=>start(i+1),1200)});
@@ -93,8 +93,8 @@ function move(e,dx,dy){if(!solid(e.x+dx,e.y))e.x+=dx;if(!solid(e.x,e.y+dy))e.y+=
 function msg(t){S('msg').textContent=t;S('msg').classList.add('show');clearTimeout(msg.t);msg.t=setTimeout(()=>S('msg').classList.remove('show'),1500)}
 function use(){if(state!=='play')return;let d=doors.find(v=>Math.hypot(v.x+.5-player.x,v.y+.5-player.y)<1.2);if(d){d.open=!d.open;msg(d.open?'Door opened':'Door closed');return}for(let o of obj)if(!o.ok&&Math.hypot(o.x-player.x,o.y-player.y)<1){o.ok=true;done++;msg('Objective complete: '+defs[o.d][0]);if(done===obj.length){openExit=true;msg('Exit unlocked!')}updateHud();return}if(openExit&&cell(player.x,player.y)==='E')end(true,'You completed every objective and escaped.')}
 function reload(){if(state!=='play'||player.reload||player.ammo==12)return;player.reload=true;setTimeout(()=>{player.ammo=12;player.reload=false},1000)}
-function shoot(){if(state!=='play'||player.reload)return;if(player.ammo<=0)return reload();player.ammo--;player.noise=Math.min(100,player.noise+22);shots.push({x:player.x,y:player.y,dx:Math.cos(player.a)*8,dy:Math.sin(player.a)*8,t:1,owner:'p'})}
-addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyE')use();if(e.code==='KeyR')reload()});addEventListener('keyup',e=>keys[e.code]=0);
+function shoot(){if(state!=='play'||player.reload)return;if(player.ammo<=0)return reload();player.ammo--;player.noise=Math.min(100,player.noise+22);shots.push({x:player.x,y:player.y,dx:Math.cos(player.a)*8,dy:Math.sin(player.a)*8,t:1,owner:'p',yellow:true});popSound();const f=S('muzzleFlash');f.style.opacity=1;setTimeout(()=>f.style.opacity=0,60)}
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyE')use();if(e.code==='KeyR')reload();if(e.code==='KeyM')toggleInfo('map');if(e.code==='KeyQ')toggleInfo('quests');if(e.code==='Tab'){e.preventDefault();toggleInfo('time')}});addEventListener('keyup',e=>keys[e.code]=0);
 addEventListener('mousemove',e=>{if(state==='play'&&device==='pc'&&document.pointerLockElement)player.a+=e.movementX*.0025});addEventListener('mousedown',shoot);c.onclick=()=>device==='pc'&&c.requestPointerLock?.();
 
 function update(dt){if(state!=='play')return;time-=dt;if(time<=0)return end(false,'Time ran out.');
@@ -102,17 +102,57 @@ let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD
 if(f||s){let l=Math.hypot(f,s);f/=l;s/=l;move(player,(Math.cos(player.a)*f+Math.cos(player.a+1.57)*s)*sp*dt,(Math.sin(player.a)*f+Math.sin(player.a+1.57)*s)*sp*dt);player.noise=Math.min(100,player.noise+(sp>3?11:4)*dt)}else player.noise=Math.max(0,player.noise-6*dt);
 gamepad();for(let b of bots){if(b.hp<=0)continue;let a=Math.atan2(player.y-b.y,player.x-b.x),d=Math.hypot(player.x-b.x,player.y-b.y);if(d<8){if(d>3)move(b,Math.cos(a)*dt,Math.sin(a)*dt);if(Math.random()<dt*.7)shots.push({x:b.x,y:b.y,dx:Math.cos(a)*6,dy:Math.sin(a)*6,t:1,owner:b})}}
 let target=player,loud=player.noise;if(loud>14){let a=Math.atan2(target.y-monster.y,target.x-monster.x);monster.a=a;move(monster,Math.cos(a)*(2.9+loud*.015)*dt,Math.sin(a)*(2.9+loud*.015)*dt);if(Math.hypot(monster.x-player.x,monster.y-player.y)<.55){player.hp-=28*dt;if(player.hp<=0)end(false,'The monster caught you.')}}for(let i=shots.length-1;i>=0;i--){let b=shots[i];b.x+=b.dx*dt;b.y+=b.dy*dt;b.t-=dt;if(b.t<0||solid(b.x,b.y)){shots.splice(i,1);continue}if(b.owner==='p'){for(let z of bots)if(z.hp>0&&Math.hypot(z.x-b.x,z.y-b.y)<.3){z.hp-=45;shots.splice(i,1);break}}else if(Math.hypot(player.x-b.x,player.y-b.y)<.3){player.hp-=18;shots.splice(i,1);if(player.hp<=0)end(false,'You were eliminated.')}}updateHud()}
-function gamepad(){if(device!=='console')return;let g=navigator.getGamepads?.()[0];if(!g)return;player.a+=(Math.abs(g.axes[2])>.15?g.axes[2]*.045:0);let lx=g.axes[0]||0,ly=g.axes[1]||0;if(Math.hypot(lx,ly)>.15)move(player,(Math.cos(player.a)*-ly+Math.cos(player.a+1.57)*lx)*.05,(Math.sin(player.a)*-ly+Math.sin(player.a+1.57)*lx)*.05);if(g.buttons[7]?.pressed)shoot();if(g.buttons[0]?.pressed)use();if(g.buttons[2]?.pressed)reload()}
+function gamepad(){if(device!=='console')return;let g=navigator.getGamepads?.()[0];if(!g)return;player.a+=(Math.abs(g.axes[2])>.15?g.axes[2]*.045:0);let lx=g.axes[0]||0,ly=g.axes[1]||0;if(Math.hypot(lx,ly)>.15)move(player,(Math.cos(player.a)*-ly+Math.cos(player.a+1.57)*lx)*.05,(Math.sin(player.a)*-ly+Math.sin(player.a+1.57)*lx)*.05);if(g.buttons[7]?.pressed)shoot();if(g.buttons[2]?.pressed)use();if(g.buttons[0]?.pressed)reload()}
 function cast(a){let d=0,xx=player.x,yy=player.y,h='1';while(d<24){xx+=Math.cos(a)*.02;yy+=Math.sin(a)*.02;d+=.02;h=cell(xx,yy);if(solid(xx,yy)||h==='E')break}return{d,h}}
 function render(){let sky=x.createLinearGradient(0,0,0,H/2);sky.addColorStop(0,'#101722');sky.addColorStop(1,'#29313a');x.fillStyle=sky;x.fillRect(0,0,W,H/2);let fl=x.createLinearGradient(0,H/2,0,H);fl.addColorStop(0,'#45494f');fl.addColorStop(1,'#111318');x.fillStyle=fl;x.fillRect(0,H/2,W,H/2);
-let F=1.047,rays=Math.min(W,500),sw=W/rays;for(let i=0;i<rays;i++){let a=player.a-F/2+i/rays*F,r=cast(a),d=r.d*Math.cos(a-player.a),hh=Math.min(H*1.6,H/(d+.001)),yy=H/2-hh/2,col='#b7b3aa';if(r.h==='d')col='#6b4b31';else if(r.h==='C')col='#79583b';else if(r.h==='R')col='#9fa6ac';else if(r.h==='L')col='#526f84';else if(r.h==='E')col=openExit?'#3dcc7c':'#a02d38';let sh=Math.max(.22,1-d/22);x.fillStyle=shade(col,sh);x.fillRect(i*sw,yy,sw+1,hh)}sprites()}
+let F=1.047,rays=Math.min(W,500),sw=W/rays;for(let i=0;i<rays;i++){let a=player.a-F/2+i/rays*F,r=cast(a),d=r.d*Math.cos(a-player.a),hh=Math.min(H*1.6,H/(d+.001)),yy=H/2-hh/2,col='#b7b3aa';if(r.h==='d')col='#7a4d2e';else if(r.h==='C')col='#79583b';else if(r.h==='R')col='#9fa6ac';else if(r.h==='L')col='#526f84';else if(r.h==='E')col=openExit?'#3dcc7c':'#a02d38';let sh=Math.max(.22,1-d/22);x.fillStyle=shade(col,sh);x.fillRect(i*sw,yy,sw+1,hh)}sprites()}
 function shade(h,m){let n=parseInt(h.slice(1),16);return`rgb(${((n>>16)&255)*m},${((n>>8)&255)*m},${(n&255)*m})`}
 function proj(wx,wy){let dx=wx-player.x,dy=wy-player.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx)-player.a;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)>.55)return null;return{x:W/2+Math.tan(a)*(W/1.15),d}}
-function sprites(){let arr=[];obj.filter(o=>!o.ok).forEach(o=>arr.push({...o,t:'o'}));bots.filter(b=>b.hp>0).forEach(b=>arr.push({...b,t:'b'}));arr.push({x:monster.x,y:monster.y,t:'m'});arr.sort((a,b)=>Math.hypot(b.x-player.x,b.y-player.y)-Math.hypot(a.x-player.x,a.y-player.y));for(let s of arr){let p=proj(s.x,s.y);if(!p)continue;let z=Math.min(H*.8,H/p.d);if(s.t==='o'){x.fillStyle='#5ca8ff';x.beginPath();x.arc(p.x,H/2,z*.12,0,7);x.fill();x.fillStyle='#fff';x.fillText('!',p.x,H/2)}if(s.t==='b'){x.fillStyle='#d0a05d';x.fillRect(p.x-z*.12,H/2-z*.3,z*.24,z*.48)}if(s.t==='m'){x.save();x.translate(p.x,H/2);x.strokeStyle='#121318';x.lineWidth=Math.max(2,z*.03);for(let i=0;i<6;i++){let side=i%2?1:-1,row=Math.floor(i/2)-1;x.beginPath();x.moveTo(side*z*.05,row*z*.08);x.lineTo(side*z*.18,row*z*.14);x.lineTo(side*z*.32,row*z*.22);x.stroke()}x.fillStyle='#202229';x.fillRect(-z*.05,-z*.34,z*.1,z*.68);x.restore()}}}
+function sprites(){let arr=[];obj.filter(o=>!o.ok).forEach(o=>arr.push({...o,t:'o'}));bots.filter(b=>b.hp>0).forEach(b=>arr.push({...b,t:'b'}));shots.forEach(b=>arr.push({...b,t:'shot'}));arr.push({x:monster.x,y:monster.y,t:'m'});arr.sort((a,b)=>Math.hypot(b.x-player.x,b.y-player.y)-Math.hypot(a.x-player.x,a.y-player.y));for(let s of arr){let p=proj(s.x,s.y);if(!p)continue;let z=Math.min(H*.8,H/p.d);if(s.t==='o'){x.fillStyle='#5ca8ff';x.beginPath();x.arc(p.x,H/2,z*.12,0,7);x.fill();x.fillStyle='#fff';x.fillText('!',p.x,H/2)}if(s.t==='b'){x.fillStyle='#d0a05d';x.fillRect(p.x-z*.12,H/2-z*.3,z*.24,z*.48)}if(s.t==='shot'){x.fillStyle='#ffd84a';x.beginPath();x.arc(p.x,H/2,Math.max(3,z*.025),0,Math.PI*2);x.fill();}
+if(s.t==='m'){x.save();x.translate(p.x,H/2);x.strokeStyle='#121318';x.lineWidth=Math.max(2,z*.03);for(let i=0;i<6;i++){let side=i%2?1:-1,row=Math.floor(i/2)-1;x.beginPath();x.moveTo(side*z*.05,row*z*.08);x.lineTo(side*z*.18,row*z*.14);x.lineTo(side*z*.32,row*z*.22);x.stroke()}x.fillStyle='#202229';x.fillRect(-z*.05,-z*.34,z*.1,z*.68);x.restore()}}}
 function updateHud(){S('timer').textContent=`${String(Math.floor(time/60)).padStart(2,'0')}:${String(Math.floor(time%60)).padStart(2,'0')}`;S('hpText').textContent=`${Math.ceil(player.hp)} / 100`;S('health').style.width=Math.max(0,player.hp)+'%';S('noiseText').textContent=Math.floor(player.noise);S('noise').style.width=player.noise+'%';S('ammo').textContent=player.reload?'RELOADING':`${player.ammo} / 12`;S('task').style.width=done/obj.length*100+'%';S('taskCount').textContent=`${done} / ${obj.length}`;let next=obj.find(o=>!o.ok);S('taskName').textContent=next?defs[next.d][0]:'Escape';S('taskDesc').textContent=next?defs[next.d][1]:'Reach the exit';S('objectives').innerHTML=obj.map(o=>(o.ok?'✓ ':'○ ')+defs[o.d][0]).join('<br>');S('goal').textContent=openExit?'ALL OBJECTIVES COMPLETE — ESCAPE':'COMPLETE ALL OBJECTIVES'}
 function end(win,t){state='end';S('hud').classList.add('hidden');document.exitPointerLock?.();S('resultTitle').textContent=win?'YOU ESCAPED':'ROUND OVER';S('resultText').textContent=t;show('result')}
 function joy(id,cb){let e=S(id),k=e.querySelector('.knob'),on=0,cx=0,cy=0;e.ontouchstart=q=>{on=1;let r=e.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2};e.ontouchmove=q=>{q.preventDefault();if(!on)return;let t=q.touches[0],dx=t.clientX-cx,dy=t.clientY-cy,m=Math.hypot(dx,dy),mx=40;if(m>mx){dx=dx/m*mx;dy=dy/m*mx}k.style.transform=`translate(${dx}px,${dy}px)`;cb(dx/mx,dy/mx)};e.ontouchend=()=>{on=0;k.style.transform='';cb(0,0)}}
 joy('moveJoy',(a,b)=>{keys.KeyW=b<-.2;keys.KeyS=b>.2;keys.KeyA=a<-.2;keys.KeyD=a>.2});joy('aimJoy',(a,b)=>{if(player&&Math.hypot(a,b)>.2)player.a=Math.atan2(b,a)});S('fireBtn').ontouchstart=shoot;S('useBtn').ontouchstart=use;S('reloadBtn').ontouchstart=reload;
+
+function toggleInfo(mode){
+  infoMode=mode||infoMode;
+  const p=S('infoPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')) renderInfo();
+}
+function renderInfo(){
+  const content=S('infoContent');
+  const mapCanvas=S('mapCanvas');
+  mapCanvas.style.display=infoMode==='map'?'block':'none';
+  if(infoMode==='map'){
+    content.innerHTML='<h2>School Map</h2><p>Blue dot: you. Red dot: monster. Green: exit. Yellow: objectives.</p>';
+    drawInfoMap();
+  }else if(infoMode==='quests'){
+    content.innerHTML='<h2>Quests</h2>'+obj.map(o=>`<p>${o.ok?'✓':'○'} <b>${defs[o.d][0]}</b><br>${defs[o.d][1]}</p>`).join('');
+  }else if(infoMode==='time'){
+    content.innerHTML=`<h2>Time Left</h2><p style="font-size:44px;font-weight:900">${S('timer').textContent}</p><p>${openExit?'The exit is open.':'Complete every objective to unlock the exit.'}</p>`;
+  }else{
+    content.innerHTML='<h2>How To Complete Quests</h2><p>Walk near glowing blue objective markers and press <b>E</b> on PC, <b>OPEN</b> on mobile, or <b>Square</b> on console.</p><p>Brown classroom doors use the same button. Search the classroom breaker, bathroom sink, office alarm panel, and final classroom desk.</p><p><b>Panel shortcuts:</b> M = map, Q = quests, Tab = time.</p>';
+  }
+}
+function drawInfoMap(){
+  const mc=S('mapCanvas'),mx=mc.getContext('2d');mx.clearRect(0,0,mc.width,mc.height);
+  const sx=mc.width/map[0].length,sy=mc.height/map.length;
+  for(let yy=0;yy<map.length;yy++)for(let xx=0;xx<map[0].length;xx++){
+    const q=map[yy][xx];mx.fillStyle=q==='1'?'#8b8f95':q==='d'?'#7a4d2e':'#202631';mx.fillRect(xx*sx,yy*sy,sx,sy);
+  }
+  const dot=(px,py,c,r=6)=>{mx.fillStyle=c;mx.beginPath();mx.arc(px*sx,py*sy,r,0,Math.PI*2);mx.fill()};
+  obj.filter(o=>!o.ok).forEach(o=>dot(o.x,o.y,'#ffd84a',6));
+  dot(player.x,player.y,'#58a6ff',7);dot(monster.x,monster.y,'#e34b55',7);
+  mx.fillStyle=openExit?'#58d58d':'#8c2b35';mx.fillRect((map[0].length-2)*sx,1*sy,sx,sy);
+}
+S('mapTab').onclick=()=>{infoMode='map';renderInfo()};
+S('questTab').onclick=()=>{infoMode='quests';renderInfo()};
+S('timeTab').onclick=()=>{infoMode='time';renderInfo()};
+S('helpTab').onclick=()=>{infoMode='help';renderInfo()};
+S('closeInfo').onclick=()=>S('infoPanel').classList.remove('open');
+
 function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;update(dt);if(state==='play')render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 </script>
 </body>
