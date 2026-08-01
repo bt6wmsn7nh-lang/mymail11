@@ -166,10 +166,12 @@ linear-gradient(#c89b27 0 35%,#222 35% 40%,#b07c13 40% 100%);clip-path:polygon(0
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),cinCanvas=document.getElementById('cinCanvas'),cctx=cinCanvas.getContext('2d');
 let W,H,D=Math.min(devicePixelRatio||1,2);
 function resize(){W=innerWidth;H=innerHeight;D=Math.min(devicePixelRatio||1,2);canvas.width=W*D;canvas.height=H*D;ctx.setTransform(D,0,0,D,0,0);cinCanvas.width=W*D;cinCanvas.height=H*D;cctx.setTransform(D,0,0,D,0,0)}addEventListener('resize',resize);resize();
-const S=id=>document.getElementById(id);
-const screens=['splash','deviceScreen','resultScreen'];
-function show(id){screens.forEach(q=>S(q).classList.add('hidden'));if(id)S(id).classList.remove('hidden')}
-let device=localStorage.schoolDevice||'',state='splash',last=performance.now(),keys={},mode='title';
+const S=id=>document.getElementById(id);window.addEventListener('error',e=>{console.error(e.error||e.message);const m=document.getElementById('message');if(m){m.textContent='Game error: '+e.message;m.classList.add('show')}});
+const screens=['splash','deviceScreen','storyOverlay','resultScreen'];
+function show(id){screens.forEach(q=>{const e=S(q);if(e)e.classList.add('hidden')});if(id){const e=S(id);if(e)e.classList.remove('hidden')}}
+function safeGetDevice(){try{return localStorage.getItem('schoolDevice')||''}catch(e){return ''}}
+function safeSetDevice(v){try{localStorage.setItem('schoolDevice',v)}catch(e){}}
+let device=safeGetDevice(),state='splash',last=performance.now(),keys={},mode='title';
 let player,monster,bots=[],shots=[],map=[],doors=[],objectives=[],night=1,timeLeft=300,done=0,exitOpen=false;let fountains=[],hideLockers=[],knockables=[],classroomProps=[];let lives=4,scareLevel=0,nightmare=false,schoolDayTimer=75,playerTeam='Blue',teammates=[];let antiCheat={lastX:0,lastY:0,lastT:0,maxSpeed:6.5,violations:0};let interactHeld=0, hiding=false, hideTimer=0, exitingHide=false, exitHold=0;
 let lobbyBuses=[],boardCountdown=0,boardBus=null,ads=false,baseSensitivity=.0025,currentSensitivity=.0025;
 const controls={
@@ -181,7 +183,7 @@ const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 
 function popSound(){try{audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.setValueAtTime(155,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(62,audioCtx.currentTime+.07);g.gain.setValueAtTime(.14,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.08);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.085)}catch(e){}}
 S('splashPlay').onclick=()=>{try{audioCtx.resume()}catch(e){} state='device';show('deviceScreen')};
-document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>{device=b.dataset.device;localStorage.schoolDevice=device;S('controlsText').textContent=controls[device];S('mobile').style.display=device==='mobile'?'block':'none';setTimeout(startForestLobby,250)});
+document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>{device=b.dataset.device;safeSetDevice(device);S('controlsText').textContent=controls[device];S('mobile').style.display=device==='mobile'?'block':'none';setTimeout(startForestLobby,250)});
 
 S('againBtn').onclick=()=>{state='splash';show('splash');S('hud').classList.add('hidden')};
 
@@ -241,7 +243,7 @@ function buildSchool(){
   map=schoolTemplate.map(r=>r.split(''));doors=[];for(let y=0;y<map.length;y++)for(let x=0;x<map[0].length;x++)if(map[y][x]==='D'){doors.push({x,y,open:false});map[y][x]='d'}
   objectives=[{x:6.5,y:3.5,d:0,ok:false},{x:6.5,y:25.5,d:1,ok:false},{x:33.5,y:25.5,d:2,ok:false},{x:33.5,y:15.5,d:3,ok:false}];fountains=[{x:18.7,y:8.5,fixed:false,progress:0},{x:21.3,y:19.5,fixed:false,progress:0}];hideLockers=[{x:14.5,y:8.5},{x:25.5,y:14.5},{x:14.5,y:19.5}];knockables=[{x:8.5,y:9.5,down:false},{x:31.5,y:20.5,down:false},{x:18.5,y:14.5,down:false}];classroomProps=[{x:5.5,y:4.5,t:'chair'},{x:7.2,y:4.5,t:'papers'},{x:31.5,y:15.2,t:'cabinet'},{x:7.4,y:24.2,t:'brokenDesk'},{x:32.2,y:25.3,t:'books'}];
   player={x:6.5,y:4.5,a:0,hp:100,maxHp:100,noise:0,ammo:30,maxAmmo:30,reload:false};
-  monster={x:20,y:2.5,a:0,active:false};bots=[{x:8,y:4.5,hp:100,team:'Blue'},{x:32,y:9,hp:100,team:'Red'},{x:7,y:20,hp:100,team:'Blue'},{x:30,y:20,hp:100,team:'Red'}];teammates=bots.filter(b=>b.team===playerTeam);lives=4;scareLevel=0;nightmare=false;schoolDayTimer=75;
+  monster={x:20,y:2.5,a:0,active:false};bots=[{x:8,y:4.5,hp:100,team:'Blue'},{x:32,y:9,hp:100,team:'Red'},{x:7,y:20,hp:100,team:'Blue'},{x:30,y:20,hp:100,team:'Red'}];teammates=bots.filter(b=>b.team===playerTeam);lives=4;scareLevel=0;nightmare=false;schoolDayTimer=75;antiCheat.lastT=0;antiCheat.lastX=player.x;antiCheat.lastY=player.y;
   shots=[];done=0;exitOpen=false;timeLeft=300;mode='school';state='play';
   S('boardPrompt').style.display='none';updateHud();
 }
