@@ -107,23 +107,6 @@ linear-gradient(#c89b27 0 35%,#222 35% 40%,#b07c13 40% 100%);clip-path:polygon(0
   </div>
 </section>
 
-<section id="modeScreen" class="screen hidden">
-  <div class="card">
-    <h1>Choose <span>Mode</span></h1>
-    <p>Play alone or join a multiplayer room with other players.</p>
-    <div id="deviceGrid">
-      <button id="soloMode" class="primary">Single Player</button>
-      <button id="hostMode" class="primary">Host Multiplayer</button>
-      <button id="joinMode" class="primary">Join Multiplayer</button>
-    </div>
-    <div id="roomPanel" style="display:none;margin-top:18px">
-      <input id="roomCodeInput" placeholder="Room code" maxlength="8" style="width:100%;padding:14px;border-radius:12px;border:1px solid #394352;background:#0d121a;color:white;font-size:18px">
-      <button id="roomAction" class="primary" style="margin-top:10px;width:100%">Connect</button>
-      <div id="roomStatus" style="margin-top:10px;color:#b8c2ce"></div>
-    </div>
-  </div>
-</section>
-
 <section id="resultScreen" class="screen hidden">
   <div class="card" style="text-align:center">
     <h1 id="resultTitle">ROUND OVER</h1>
@@ -132,7 +115,7 @@ linear-gradient(#c89b27 0 35%,#222 35% 40%,#b07c13 40% 100%);clip-path:polygon(0
   </div>
 </section>
 
-<div id="cinematic">
+<div id="storyOverlay" class="screen hidden" style="z-index:90;background:#030406"><div class="card" style="text-align:center"><h1 id="storyTitle">YOU WAKE UP</h1><p id="storyText"></p><button id="storyContinue" class="primary">Continue</button></div></div><div id="jumpScare" style="position:fixed;inset:0;z-index:120;background:#000;display:none;align-items:center;justify-content:center"><div style="font-size:min(28vw,280px);filter:drop-shadow(0 0 30px #fff)">◉</div></div><div id="cinematic">
   <canvas id="cinCanvas"></canvas>
   <div id="cinText">The bus is leaving...</div>
   <div id="doorSlam"><div class="slamDoor left"></div><div class="slamDoor right"></div></div>
@@ -157,7 +140,7 @@ linear-gradient(#c89b27 0 35%,#222 35% 40%,#b07c13 40% 100%);clip-path:polygon(0
     <div class="box section"><div class="label">Quests</div><div id="objectiveList" class="value" style="font-size:13px;line-height:1.75"></div></div>
     <div class="box section" style="margin-top:8px"><div class="label">Ammo</div><div id="ammoText" class="value">30 / 30</div></div>
   </div>
-  <div id="crosshair"></div>
+  <div id="crosshair"></div><div id="teamArrows" style="position:absolute;inset:0;pointer-events:none"></div>
   <div id="message" class="box"></div>
   <div id="boardPrompt" class="box">Stand in the red circle</div><div id="hideMeter" class="box"><div class="label" id="hideLabel">Hold E</div><div class="bar"><div id="hideFill" class="fill"></div></div></div><div id="roomBadge" class="box"></div>
 
@@ -184,10 +167,10 @@ const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),cinCanv
 let W,H,D=Math.min(devicePixelRatio||1,2);
 function resize(){W=innerWidth;H=innerHeight;D=Math.min(devicePixelRatio||1,2);canvas.width=W*D;canvas.height=H*D;ctx.setTransform(D,0,0,D,0,0);cinCanvas.width=W*D;cinCanvas.height=H*D;cctx.setTransform(D,0,0,D,0,0)}addEventListener('resize',resize);resize();
 const S=id=>document.getElementById(id);
-const screens=['splash','deviceScreen','modeScreen','resultScreen'];
+const screens=['splash','deviceScreen','resultScreen'];
 function show(id){screens.forEach(q=>S(q).classList.add('hidden'));if(id)S(id).classList.remove('hidden')}
 let device=localStorage.schoolDevice||'',state='splash',last=performance.now(),keys={},mode='title';
-let player,monster,bots=[],shots=[],map=[],doors=[],objectives=[],night=1,timeLeft=300,done=0,exitOpen=false;let fountains=[],hideLockers=[],knockables=[],classroomProps=[];let interactHeld=0, hiding=false, hideTimer=0, exitingHide=false, exitHold=0;let gameMode='solo',socket=null,roomCode='',remotePlayers=new Map(),networkTimer=0;
+let player,monster,bots=[],shots=[],map=[],doors=[],objectives=[],night=1,timeLeft=300,done=0,exitOpen=false;let fountains=[],hideLockers=[],knockables=[],classroomProps=[];let lives=4,scareLevel=0,nightmare=false,schoolDayTimer=75,playerTeam='Blue',teammates=[];let antiCheat={lastX:0,lastY:0,lastT:0,maxSpeed:6.5,violations:0};let interactHeld=0, hiding=false, hideTimer=0, exitingHide=false, exitHold=0;
 let lobbyBuses=[],boardCountdown=0,boardBus=null,ads=false,baseSensitivity=.0025,currentSensitivity=.0025;
 const controls={
 pc:'WASD move • Mouse aim • Left click fire • Right click aim • E interact • R reload • Shift sprint • M map • Q quests',
@@ -196,50 +179,9 @@ console:'Left stick move • Right stick aim • RT/R2 fire • LT/L2 aim • Sq
 };
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 
-function makeRoomCode(){return Math.random().toString(36).slice(2,7).toUpperCase()}
-function connectMultiplayer(code,host){
-  gameMode='multi';roomCode=(code||makeRoomCode()).toUpperCase();
-  const proto=location.protocol==='https:'?'wss':'ws';
-  const hostName=location.host||'localhost:3000';
-  socket=new WebSocket(`${proto}://${hostName}`);
-  S('roomStatus').textContent='Connecting...';
-  socket.onopen=()=>{
-    socket.send(JSON.stringify({type:'join',room:roomCode,name:'Player'+Math.floor(Math.random()*9999),host}));
-    S('roomStatus').textContent=`Connected to room ${roomCode}`;
-    S('roomBadge').style.display='block';S('roomBadge').textContent=`ROOM ${roomCode}`;
-    setTimeout(startForestLobby,300);
-  };
-  socket.onmessage=e=>{
-    let m;try{m=JSON.parse(e.data)}catch{return}
-    if(m.type==='state'){
-      for(const p of m.players){
-        if(p.id===m.self)continue;
-        remotePlayers.set(p.id,p);
-      }
-      for(const id of [...remotePlayers.keys()])if(!m.players.some(p=>p.id===id))remotePlayers.delete(id);
-    }else if(m.type==='shot'){
-      shots.push({x:m.x,y:m.y,dx:m.dx,dy:m.dy,t:1,owner:'remote'});
-    }else if(m.type==='room') roomCode=m.room;
-  };
-  socket.onclose=()=>{S('roomStatus').textContent='Disconnected';};
-}
-function sendNet(type,data={}){
-  if(socket&&socket.readyState===1)socket.send(JSON.stringify({type,room:roomCode,...data}));
-}
-
 function popSound(){try{audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.setValueAtTime(155,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(62,audioCtx.currentTime+.07);g.gain.setValueAtTime(.14,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.08);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.085)}catch(e){}}
 S('splashPlay').onclick=()=>{try{audioCtx.resume()}catch(e){} state='device';show('deviceScreen')};
-document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>{device=b.dataset.device;localStorage.schoolDevice=device;S('controlsText').textContent=controls[device];S('mobile').style.display=device==='mobile'?'block':'none';setTimeout(()=>show('modeScreen'),250)});
-
-S('soloMode').onclick=()=>{gameMode='solo';show();startForestLobby()};
-S('hostMode').onclick=()=>{
-  S('roomPanel').style.display='block';S('roomCodeInput').value=makeRoomCode();S('roomAction').textContent='Host Room';
-  S('roomAction').onclick=()=>connectMultiplayer(S('roomCodeInput').value,true);
-};
-S('joinMode').onclick=()=>{
-  S('roomPanel').style.display='block';S('roomCodeInput').value='';S('roomAction').textContent='Join Room';
-  S('roomAction').onclick=()=>connectMultiplayer(S('roomCodeInput').value,false);
-};
+document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>{device=b.dataset.device;localStorage.schoolDevice=device;S('controlsText').textContent=controls[device];S('mobile').style.display=device==='mobile'?'block':'none';setTimeout(startForestLobby,250)});
 
 S('againBtn').onclick=()=>{state='splash';show('splash');S('hud').classList.add('hidden')};
 
@@ -289,12 +231,17 @@ const schoolTemplate=[
 "1..TTTTTT....D..........D....TTTTTT.....1",
 "1..TTTTTT...............................1",
 "1111111111111111111111111111111111111111"];
-const defs=[['Restore Power','Activate the classroom breaker'],['Bathroom Key','Search the bathroom sink'],['Disable Alarm','Use the office alarm panel'],['Exit Pass','Search the final classroom desk']];
+const defs=[['Cut Chains','Find bolt cutters in a classroom'],['Remove Boards','Find a pry bar in the bathroom'],['Pull Nails','Find a hammer in the office'],['Unlock Door','Find the exit key in the final classroom']];
+
+function startWakeStory(){state='story';S('hud').classList.add('hidden');show('storyOverlay');S('storyTitle').textContent='YOU WAKE UP IN CLASS';S('storyText').textContent='You were knocked unconscious on the way in. Class is still active. Stay with your team until school ends.';S('storyContinue').onclick=()=>{show();S('hud').classList.remove('hidden');state='play';mode='school';message('School ends in 1:15. The nightmare begins after.');if(device==='pc')canvas.requestPointerLock?.()}}
+function triggerJumpScare(){const j=S('jumpScare');j.style.display='flex';setTimeout(()=>j.style.display='none',450)}
+function loseLife(reason){lives--;scareLevel++;triggerJumpScare();if(lives<=0){endGame(false,reason||'You lost all four lives.');return}player.hp=player.maxHp;player.x=6.5;player.y=4.5;player.noise=0;message(`Life lost. ${lives} lives remain.`)}
+function antiCheatCheck(){if(!player||state!=='play')return;const now=performance.now()/1000;if(!antiCheat.lastT){antiCheat.lastT=now;antiCheat.lastX=player.x;antiCheat.lastY=player.y;return}const elapsed=Math.max(.001,now-antiCheat.lastT),speed=Math.hypot(player.x-antiCheat.lastX,player.y-antiCheat.lastY)/elapsed;if(speed>antiCheat.maxSpeed){antiCheat.violations++;player.x=antiCheat.lastX;player.y=antiCheat.lastY;message('Anti-cheat: impossible movement blocked.')}antiCheat.lastX=player.x;antiCheat.lastY=player.y;antiCheat.lastT=now}
 function buildSchool(){
   map=schoolTemplate.map(r=>r.split(''));doors=[];for(let y=0;y<map.length;y++)for(let x=0;x<map[0].length;x++)if(map[y][x]==='D'){doors.push({x,y,open:false});map[y][x]='d'}
   objectives=[{x:6.5,y:3.5,d:0,ok:false},{x:6.5,y:25.5,d:1,ok:false},{x:33.5,y:25.5,d:2,ok:false},{x:33.5,y:15.5,d:3,ok:false}];fountains=[{x:18.7,y:8.5,fixed:false,progress:0},{x:21.3,y:19.5,fixed:false,progress:0}];hideLockers=[{x:14.5,y:8.5},{x:25.5,y:14.5},{x:14.5,y:19.5}];knockables=[{x:8.5,y:9.5,down:false},{x:31.5,y:20.5,down:false},{x:18.5,y:14.5,down:false}];classroomProps=[{x:5.5,y:4.5,t:'chair'},{x:7.2,y:4.5,t:'papers'},{x:31.5,y:15.2,t:'cabinet'},{x:7.4,y:24.2,t:'brokenDesk'},{x:32.2,y:25.3,t:'books'}];
-  player={x:20,y:26,a:-Math.PI/2,hp:100,maxHp:100,noise:0,ammo:30,maxAmmo:30,reload:false};
-  monster={x:20,y:2.5,a:0};bots=[{x:6,y:9,hp:100},{x:34,y:9,hp:100},{x:7,y:20,hp:100}];
+  player={x:6.5,y:4.5,a:0,hp:100,maxHp:100,noise:0,ammo:30,maxAmmo:30,reload:false};
+  monster={x:20,y:2.5,a:0,active:false};bots=[{x:8,y:4.5,hp:100,team:'Blue'},{x:32,y:9,hp:100,team:'Red'},{x:7,y:20,hp:100,team:'Blue'},{x:30,y:20,hp:100,team:'Red'}];teammates=bots.filter(b=>b.team===playerTeam);lives=4;scareLevel=0;nightmare=false;schoolDayTimer=75;
   shots=[];done=0;exitOpen=false;timeLeft=300;mode='school';state='play';
   S('boardPrompt').style.display='none';updateHud();
 }
@@ -310,7 +257,7 @@ function startBusCinematic(busId){
       S('cinText').textContent='The doors slam shut behind you.';
       S('doorSlam').classList.add('closed');
       if(elapsed>10.6){
-        S('cinematic').style.display='none';S('doorSlam').classList.remove('closed');S('hud').classList.remove('hidden');buildSchool();if(device==='pc')canvas.requestPointerLock?.();return
+        S('cinematic').style.display='none';S('doorSlam').classList.remove('closed');buildSchool();startWakeStory();return
       }
     }
     requestAnimationFrame(scene)
@@ -417,7 +364,7 @@ function use(){
   if(exitOpen&&cell(player.x,player.y)==='E'&&night>=12)endGame(true,'You survived all 12 nights and escaped.')
 }
 function reload(){if(!player||player.reload||player.ammo===player.maxAmmo)return;player.reload=true;setTimeout(()=>{if(player){player.ammo=player.maxAmmo;player.reload=false}},1250)}
-function shoot(){if(state!=='play'||player.reload)return;if(player.ammo<=0)return reload();player.ammo--;player.noise=Math.min(100,player.noise+22);const ndx=Math.cos(player.a)*9,ndy=Math.sin(player.a)*9;shots.push({x:player.x,y:player.y,dx:ndx,dy:ndy,t:1,owner:'p'});sendNet('shot',{x:player.x,y:player.y,dx:ndx,dy:ndy});popSound();S('muzzle').style.opacity=1;setTimeout(()=>S('muzzle').style.opacity=0,55)}
+function shoot(){if(state!=='play'||player.reload)return;if(player.ammo<=0)return reload();player.ammo--;player.noise=Math.min(100,player.noise+22);const ndx=Math.cos(player.a)*9,ndy=Math.sin(player.a)*9;shots.push({x:player.x,y:player.y,dx:ndx,dy:ndy,t:1,owner:'p'});popSound();S('muzzle').style.opacity=1;setTimeout(()=>S('muzzle').style.opacity=0,55)}
 function setAds(v){ads=v;currentSensitivity=ads?baseSensitivity*.52:baseSensitivity;S('rifle').classList.toggle('ads',ads)}
 addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyE'){interactHeld=0;use();}if(e.code==='KeyR')reload();if(e.code==='KeyM')toggleInfo('map');if(e.code==='KeyQ')toggleInfo('quests')});
 addEventListener('keyup',e=>{keys[e.code]=0;if(e.code==='KeyE'){interactHeld=0;exitHold=0;S('hideMeter').style.display='none'}});
@@ -441,14 +388,16 @@ function updateLobby(dt){
   }else{boardBus=null;boardCountdown=0;S('boardPrompt').textContent='Walk into a red circle near a bus'}
 }
 function updateSchool(dt){
+  antiCheatCheck();
+  if(!nightmare){schoolDayTimer-=dt;S('objectiveTop').textContent=`SCHOOL ENDS IN ${Math.ceil(schoolDayTimer)}s`;updateTeamArrows();updateHud();if(schoolDayTimer<=0){nightmare=true;monster.active=true;message('School is over. The nightmare begins.');triggerJumpScare()}return}
   timeLeft-=dt;if(timeLeft<=0){
     if(night<12){night++;timeLeft=300;player.hp=Math.min(player.maxHp,player.hp+25);message(`Night ${night} begins.`)}
     else{exitOpen=true;message('Night 12 survived. Reach the exit!')}
   }
   updateHoldInteractions(dt);updateKnockables();
-  for(const b of bots){if(b.hp<=0)continue;let a=Math.atan2(player.y-b.y,player.x-b.x),d=Math.hypot(player.x-b.x,player.y-b.y);if(d<8){if(d>3)move(b,Math.cos(a)*dt,Math.sin(a)*dt);if(Math.random()<dt*.7)shots.push({x:b.x,y:b.y,dx:Math.cos(a)*6,dy:Math.sin(a)*6,t:1,owner:b})}}
-  if(monster&&monster.confused>0)monster.confused=Math.max(0,monster.confused-dt);let loud=hiding?0:player.noise;if(loud>14&&(!monster.confused||monster.confused<=0)){let a=Math.atan2(player.y-monster.y,player.x-monster.x);monster.a=a;monster.slow=Math.max(0,(monster.slow||0)-dt);const slowMul=monster.slow>0?.48:1;move(monster,Math.cos(a)*(1.75+loud*.008)*slowMul*dt,Math.sin(a)*(1.75+loud*.008)*slowMul*dt);if(Math.hypot(monster.x-player.x,monster.y-player.y)<.55){player.hp-=30*dt;if(player.hp<=0)endGame(false,'The monster caught you.')}} 
-  for(let i=shots.length-1;i>=0;i--){let b=shots[i];b.x+=b.dx*dt;b.y+=b.dy*dt;b.t-=dt;if(b.t<0||solid(b.x,b.y)){shots.splice(i,1);continue}if(b.owner==='p'){if(monster&&Math.hypot(monster.x-b.x,monster.y-b.y)<.38){monster.slow=Math.min(4,(monster.slow||0)+1.25);shots.splice(i,1);message('Monster slowed');continue}for(const z of bots)if(z.hp>0&&Math.hypot(z.x-b.x,z.y-b.y)<.3){z.hp-=45;shots.splice(i,1);break}}else if(Math.hypot(player.x-b.x,player.y-b.y)<.3){player.hp-=18;shots.splice(i,1);if(player.hp<=0)endGame(false,'You were eliminated.')}}
+  for(const b of bots){if(b.hp<=0)continue;if(b.team===playerTeam){let d=Math.hypot(player.x-b.x,player.y-b.y),a=Math.atan2(player.y-b.y,player.x-b.x);if(d>2.5)move(b,Math.cos(a)*.9*dt,Math.sin(a)*.9*dt);continue}let a=Math.atan2(player.y-b.y,player.x-b.x),d=Math.hypot(player.x-b.x,player.y-b.y);if(d<8){if(d>3)move(b,Math.cos(a)*dt,Math.sin(a)*dt);if(Math.random()<dt*.45)shots.push({x:b.x,y:b.y,dx:Math.cos(a)*6,dy:Math.sin(a)*6,t:1,owner:b})}}
+  if(monster&&monster.active&&monster.confused>0)monster.confused=Math.max(0,monster.confused-dt);let loud=hiding?0:player.noise;if(monster.active&&loud>14&&(!monster.confused||monster.confused<=0)){let a=Math.atan2(player.y-monster.y,player.x-monster.x);monster.a=a;monster.slow=Math.max(0,(monster.slow||0)-dt);const slowMul=monster.slow>0?.48:1;move(monster,Math.cos(a)*(1.75+loud*.008)*slowMul*dt,Math.sin(a)*(1.75+loud*.008)*slowMul*dt);if(Math.hypot(monster.x-player.x,monster.y-player.y)<.55){player.hp-=12*dt;if(player.hp<=0)loseLife('The monster caught you.')}} 
+  for(let i=shots.length-1;i>=0;i--){let b=shots[i];b.x+=b.dx*dt;b.y+=b.dy*dt;b.t-=dt;if(b.t<0||solid(b.x,b.y)){shots.splice(i,1);continue}if(b.owner==='p'){if(monster&&Math.hypot(monster.x-b.x,monster.y-b.y)<.38){monster.slow=Math.min(4,(monster.slow||0)+1.25);shots.splice(i,1);message('Monster slowed');continue}for(const z of bots)if(z.hp>0&&Math.hypot(z.x-b.x,z.y-b.y)<.3){z.hp-=45;shots.splice(i,1);break}}else if(Math.hypot(player.x-b.x,player.y-b.y)<.3){player.hp-=10;shots.splice(i,1);if(player.hp<=0)loseLife('You were eliminated.')}}
   const nearby=nearestDoor();
   if(nearby){
     S('boardPrompt').style.display='block';
@@ -456,12 +405,11 @@ function updateSchool(dt){
   }else if(mode==='school'){
     S('boardPrompt').style.display='none';
   }
-  networkTimer+=dt;if(gameMode==='multi'&&networkTimer>.08){networkTimer=0;sendNet('state',{x:player.x,y:player.y,a:player.a,hp:player.hp,mode,night})}
   updateHud()
 }
 function gamepad(){if(device!=='console')return;const g=navigator.getGamepads?.()[0];if(!g)return;setAds(!!g.buttons[6]?.pressed);player.a+=(Math.abs(g.axes[2])>.15?g.axes[2]*(ads?.022:.045):0);let lx=g.axes[0]||0,ly=g.axes[1]||0;if(Math.hypot(lx,ly)>.15)move(player,(Math.cos(player.a)*-ly+Math.cos(player.a+Math.PI/2)*lx)*.05,(Math.sin(player.a)*-ly+Math.sin(player.a+Math.PI/2)*lx)*.05);if(g.buttons[7]?.pressed)shoot();if(g.buttons[2]?.pressed)use();if(g.buttons[0]?.pressed)reload()}
 function cast(a){let d=0,xx=player.x,yy=player.y,h='1';while(d<24){xx+=Math.cos(a)*.02;yy+=Math.sin(a)*.02;d+=.02;h=cell(xx,yy);if(solid(xx,yy)||h==='E')break}return{d,h}}
-function render(){S('rifle').style.display=hiding?'none':'block';let sky=ctx.createLinearGradient(0,0,0,H/2);sky.addColorStop(0,mode==='lobby'?'#17232b':'#101722');sky.addColorStop(1,mode==='lobby'?'#26362e':'#29313a');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H/2);let fl=ctx.createLinearGradient(0,H/2,0,H);fl.addColorStop(0,mode==='lobby'?'#314238':'#45494f');fl.addColorStop(1,'#111318');ctx.fillStyle=fl;ctx.fillRect(0,H/2,W,H/2);
+function render(){S('rifle').style.display=hiding?'none':'block';let sky=ctx.createLinearGradient(0,0,0,H/2);sky.addColorStop(0,mode==='lobby'?'#17232b':`rgb(${16+scareLevel*10},${23-Math.min(12,scareLevel*3)},${34-Math.min(18,scareLevel*4)})`);sky.addColorStop(1,mode==='lobby'?'#26362e':'#29313a');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H/2);let fl=ctx.createLinearGradient(0,H/2,0,H);fl.addColorStop(0,mode==='lobby'?'#314238':'#45494f');fl.addColorStop(1,'#111318');ctx.fillStyle=fl;ctx.fillRect(0,H/2,W,H/2);
   const F=ads?.72:1.047,rays=Math.min(W,520),sw=W/rays;for(let i=0;i<rays;i++){let a=player.a-F/2+i/rays*F,r=cast(a),d=r.d*Math.cos(a-player.a),hh=Math.min(H*1.6,H/(d+.001)),yy=H/2-hh/2,col='#b7b3aa';if(r.h==='d')col='#9a6037';else if(r.h==='C')col='#79583b';else if(r.h==='R')col='#9fa6ac';else if(r.h==='L')col='#526f84';else if(r.h==='T')col='#19351f';else if(r.h==='E')col=exitOpen?'#3dcc7c':'#a02d38';let sh=Math.max(.2,1-d/22);ctx.fillStyle=shade(col,sh);ctx.fillRect(i*sw,yy,sw+1,hh);
     if(r.h==='d' && i%6===0){
       ctx.fillStyle='rgba(35,18,8,.55)';
@@ -475,7 +423,7 @@ function proj(wx,wy){let dx=wx-player.x,dy=wy-player.y,d=Math.hypot(dx,dy),a=Mat
 function sprites(){
   let arr=[];
   if(mode==='lobby'){for(const b of lobbyBuses){arr.push({x:b.x,y:b.y,t:'bus',id:b.id});arr.push({x:b.x,y:b.y+2.2,t:'circle',id:b.id})}}
-  else{objectives.filter(o=>!o.ok).forEach(o=>arr.push({...o,t:'o'}));bots.filter(b=>b.hp>0).forEach(b=>arr.push({...b,t:'b'}));shots.forEach(b=>arr.push({...b,t:'shot'}));fountains.filter(f=>!f.fixed).forEach(f=>arr.push({...f,t:'fountain'}));hideLockers.forEach(l=>arr.push({...l,t:'hideLocker'}));knockables.filter(k=>!k.down).forEach(k=>arr.push({...k,t:'knock'}));classroomProps.forEach(p=>arr.push({...p,t:'prop'}));for(const rp of remotePlayers.values())if(rp.mode===mode)arr.push({...rp,t:'remote'});if(monster)arr.push({x:monster.x,y:monster.y,t:'m'})}
+  else{objectives.filter(o=>!o.ok).forEach(o=>arr.push({...o,t:'o'}));bots.filter(b=>b.hp>0).forEach(b=>arr.push({...b,t:'b'}));shots.forEach(b=>arr.push({...b,t:'shot'}));fountains.filter(f=>!f.fixed).forEach(f=>arr.push({...f,t:'fountain'}));hideLockers.forEach(l=>arr.push({...l,t:'hideLocker'}));knockables.filter(k=>!k.down).forEach(k=>arr.push({...k,t:'knock'}));classroomProps.forEach(p=>arr.push({...p,t:'prop'}));if(monster&&monster.active)arr.push({x:monster.x,y:monster.y,t:'m'})}
   arr.sort((a,b)=>Math.hypot(b.x-player.x,b.y-player.y)-Math.hypot(a.x-player.x,a.y-player.y));
   for(const s of arr){const p=proj(s.x,s.y);if(!p||p.d<.2)continue;const z=Math.min(H*.9,H/p.d);
     if(s.t==='bus'){ctx.fillStyle='#d9a52a';ctx.fillRect(p.x-z*.42,H/2-z*.3,z*.84,z*.46);ctx.fillStyle='#203748';for(let i=0;i<5;i++)ctx.fillRect(p.x-z*.34+i*z*.15,H/2-z*.24,z*.11,z*.1);ctx.fillStyle='#111';ctx.beginPath();ctx.arc(p.x-z*.28,H/2+z*.17,z*.08,0,Math.PI*2);ctx.arc(p.x+z*.28,H/2+z*.17,z*.08,0,Math.PI*2);ctx.fill()}
@@ -488,15 +436,16 @@ function sprites(){
     if(s.t==='hideLocker'){ctx.fillStyle='#425d73';ctx.fillRect(p.x-z*.16,H/2-z*.35,z*.32,z*.7);ctx.fillStyle='#1d2933';for(let q=0;q<3;q++)ctx.fillRect(p.x-z*.08,H/2-z*.25+q*z*.08,z*.16,z*.02)}
     if(s.t==='knock'){ctx.fillStyle='#7d654d';ctx.fillRect(p.x-z*.18,H/2-z*.1,z*.36,z*.2)}
     if(s.t==='prop'){ctx.fillStyle='#625548';ctx.fillRect(p.x-z*.15,H/2-z*.12,z*.3,z*.24)}
-    if(s.t==='remote'){ctx.fillStyle='#7ad0ff';ctx.fillRect(p.x-z*.11,H/2-z*.3,z*.22,z*.48)}
+    
 
     if(s.t==='m'){ctx.save();ctx.translate(p.x,H/2);ctx.strokeStyle='#121318';ctx.lineWidth=Math.max(2,z*.03);for(let i=0;i<6;i++){let side=i%2?1:-1,row=Math.floor(i/2)-1;ctx.beginPath();ctx.moveTo(side*z*.05,row*z*.08);ctx.lineTo(side*z*.18,row*z*.14);ctx.lineTo(side*z*.32,row*z*.22);ctx.stroke()}ctx.fillStyle='#202229';ctx.fillRect(-z*.05,-z*.34,z*.1,z*.68);ctx.restore()}
   }
 }
-function updateHud(){S('nightBox').textContent=`NIGHT ${night} / 12`;S('timerBox').textContent=`${String(Math.max(0,Math.floor(timeLeft/60))).padStart(2,'0')}:${String(Math.max(0,Math.floor(timeLeft%60))).padStart(2,'0')}`;S('hpText').textContent=`${Math.ceil(player.hp)} / ${player.maxHp}`;S('healthFill').style.width=Math.max(0,player.hp/player.maxHp*100)+'%';S('noiseText').textContent=Math.floor(player.noise);S('noiseFill').style.width=player.noise+'%';S('ammoText').textContent=player.reload?'RELOADING':`${player.ammo} / ${player.maxAmmo}`;S('taskFill').style.width=done/objectives.length*100+'%';S('taskCount').textContent=`${done} / ${objectives.length}`;let next=objectives.find(o=>!o.ok);S('taskName').textContent=next?defs[next.d][0]:'Survive';S('taskDesc').textContent=next?defs[next.d][1]:'Survive through Night 12';S('objectiveList').innerHTML=objectives.map(o=>(o.ok?'✓ ':'○ ')+defs[o.d][0]).join('<br>');S('objectiveTop').textContent=night>=12&&exitOpen?'REACH THE EXIT':'SURVIVE 12 NIGHTS'}
+function updateTeamArrows(){const wrap=S('teamArrows');wrap.innerHTML='';for(const q of teammates){if(q.hp<=0)continue;const p=proj(q.x,q.y);if(!p)continue;const e=document.createElement('div');e.textContent='▲';e.style.cssText=`position:absolute;left:${Math.max(20,Math.min(W-40,p.x))}px;top:18%;color:#69b7ff;font-size:28px;font-weight:900;text-shadow:0 0 8px #000`;wrap.appendChild(e)}}
+function updateHud(){S('nightBox').textContent=nightmare?`NIGHT ${night} / 12`:'CLASS IN SESSION';S('timerBox').textContent=`${String(Math.max(0,Math.floor(timeLeft/60))).padStart(2,'0')}:${String(Math.max(0,Math.floor(timeLeft%60))).padStart(2,'0')}`;S('hpText').textContent=`${Math.ceil(player.hp)} / ${player.maxHp}`;S('healthFill').style.width=Math.max(0,player.hp/player.maxHp*100)+'%';S('noiseText').textContent=Math.floor(player.noise);S('noiseFill').style.width=player.noise+'%';S('ammoText').textContent=player.reload?'RELOADING':`${player.ammo} / ${player.maxAmmo}`;S('taskFill').style.width=done/objectives.length*100+'%';S('taskCount').textContent=`${done} / ${objectives.length}`;let next=objectives.find(o=>!o.ok);S('taskName').textContent=next?defs[next.d][0]:'Survive';S('taskDesc').textContent=next?defs[next.d][1]:'Survive through Night 12';S('objectiveList').innerHTML=`TEAM: ${playerTeam}<br>LIVES: ${lives}<br>`+objectives.map(o=>(o.ok?'✓ ':'○ ')+defs[o.d][0]).join('<br>');S('objectiveTop').textContent=night>=12&&exitOpen?'REACH THE EXIT':'SURVIVE 12 NIGHTS'}
 function toggleInfo(kind){const p=S('infoPanel');p.classList.toggle('open');if(!p.classList.contains('open'))return;S('mapCanvas').style.display=kind==='map'?'block':'none';if(kind==='map'){S('infoContent').innerHTML='<h2>School Map</h2><p>Blue: you. Red: monster. Yellow: unfinished quests.</p>';drawMap()}else if(kind==='quests'){S('infoContent').innerHTML='<h2>Quests</h2>'+objectives.map(o=>`<p>${o.ok?'✓':'○'} <b>${defs[o.d][0]}</b><br>${defs[o.d][1]}</p>`).join('')}else{S('infoContent').innerHTML=`<h2>Night ${night} of 12</h2><p>${S('timerBox').textContent} remains in this night.</p><p>Each night lasts five minutes.</p>`}}
-function drawMap(){const mc=S('mapCanvas'),m=mc.getContext('2d'),sx=mc.width/map[0].length,sy=mc.height/map.length;m.clearRect(0,0,mc.width,mc.height);for(let y=0;y<map.length;y++)for(let x=0;x<map[0].length;x++){const q=map[y][x];m.fillStyle=q==='1'?'#8b8f95':q==='d'?'#7a4d2e':'#202631';m.fillRect(x*sx,y*sy,sx,sy)}const dot=(x,y,c)=>{m.fillStyle=c;m.beginPath();m.arc(x*sx,y*sy,7,0,Math.PI*2);m.fill()};objectives.filter(o=>!o.ok).forEach(o=>dot(o.x,o.y,'#ffd84a'));dot(player.x,player.y,'#58a6ff');dot(monster.x,monster.y,'#e34b55')}
-S('mapTab').onclick=()=>toggleInfo('map');S('questTab').onclick=()=>toggleInfo('quests');S('timeTab').onclick=()=>toggleInfo('time');S('helpTab').onclick=()=>{S('infoPanel').classList.add('open');S('mapCanvas').style.display='none';S('infoContent').innerHTML='<h2>How To Play</h2><p>Complete quests, repair water fountains by holding E, knock over objects while sprinting to distract the monster, and hide in lockers.</p><p>You may stay hidden for 1 minute. After that, hold E for 5 seconds to climb out.</p><p>Bullets slow the monster temporarily.</p>'};S('closeInfo').onclick=()=>S('infoPanel').classList.remove('open');
+function drawMap(){const mc=S('mapCanvas'),m=mc.getContext('2d'),sx=mc.width/map[0].length,sy=mc.height/map.length;m.clearRect(0,0,mc.width,mc.height);for(let y=0;y<map.length;y++)for(let x=0;x<map[0].length;x++){const q=map[y][x];m.fillStyle=q==='1'?'#8b8f95':q==='d'?'#7a4d2e':'#202631';m.fillRect(x*sx,y*sy,sx,sy)}const dot=(x,y,c)=>{m.fillStyle=c;m.beginPath();m.arc(x*sx,y*sy,7,0,Math.PI*2);m.fill()};objectives.filter(o=>!o.ok).forEach(o=>dot(o.x,o.y,'#ffd84a'));dot(player.x,player.y,'#58a6ff');if(monster&&monster.active)dot(monster.x,monster.y,'#e34b55')}
+S('mapTab').onclick=()=>toggleInfo('map');S('questTab').onclick=()=>toggleInfo('quests');S('timeTab').onclick=()=>toggleInfo('time');S('helpTab').onclick=()=>{S('infoPanel').classList.add('open');S('mapCanvas').style.display='none';S('infoContent').innerHTML='<h2>How To Play</h2><p>Complete quests, repair water fountains by holding E, knock over objects while sprinting to distract the monster, and hide in lockers.</p><p>You may stay hidden for 1 minute. After that, hold E for 5 seconds to climb out.</p><p>Bullets slow the monster temporarily.</p><p>You have four lives. Each lost life makes the nightmare darker and triggers a jumpscare.</p><p>Blue arrows point to teammates. Complete the chain, board, nail, and key quests to escape.</p>'};S('closeInfo').onclick=()=>S('infoPanel').classList.remove('open');
 function endGame(win,t){state='end';S('hud').classList.add('hidden');document.exitPointerLock?.();S('resultTitle').textContent=win?'YOU ESCAPED':'ROUND OVER';S('resultText').textContent=t;show('result')}
 function joy(id,cb){let e=S(id),k=e.querySelector('.knob'),on=0,cx=0,cy=0;e.ontouchstart=q=>{on=1;let r=e.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2};e.ontouchmove=q=>{q.preventDefault();if(!on)return;let t=q.touches[0],dx=t.clientX-cx,dy=t.clientY-cy,m=Math.hypot(dx,dy),mx=40;if(m>mx){dx=dx/m*mx;dy=dy/m*mx}k.style.transform=`translate(${dx}px,${dy}px)`;cb(dx/mx,dy/mx)};e.ontouchend=()=>{on=0;k.style.transform='';cb(0,0)}}
 joy('moveJoy',(a,b)=>{keys.KeyW=b<-.2;keys.KeyS=b>.2;keys.KeyA=a<-.2;keys.KeyD=a>.2});let lookTouchId=null,lookLastX=0,lookLastY=0;
