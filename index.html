@@ -75,7 +75,7 @@ linear-gradient(#c89b27 0 35%,#222 35% 40%,#b07c13 40% 100%);clip-path:polygon(0
 .slamDoor{width:50%;height:100%;background:linear-gradient(90deg,#6b4327,#3f2717);transform:translateX(-105%);transition:.55s transform cubic-bezier(.7,0,.3,1)}
 .slamDoor.right{transform:translateX(105%);border-left:5px solid #1b1009}.slamDoor.left{border-right:5px solid #1b1009}
 #doorSlam.closed .left,#doorSlam.closed .right{transform:translateX(0)}
-#mobile{position:absolute;inset:0;pointer-events:none}.joy{position:absolute;bottom:22px;width:120px;height:120px;border:2px solid #ffffff35;border-radius:50%;background:#0005;pointer-events:auto;touch-action:none}
+#mobile{position:absolute;inset:0;pointer-events:none}#lookZone:after{content:'DRAG TO LOOK';position:absolute;right:18px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.16);font-weight:900;font-size:13px;letter-spacing:.12em;pointer-events:none}.joy{position:absolute;bottom:22px;width:120px;height:120px;border:2px solid #ffffff35;border-radius:50%;background:#0005;pointer-events:auto;touch-action:none}
 #moveJoy{left:18px}#aimJoy{right:18px}.knob{position:absolute;width:46px;height:46px;left:35px;top:35px;border-radius:50%;background:#ffffff44}
 .action{position:absolute;border-radius:50%;pointer-events:auto;color:white}.fire{right:38px;bottom:160px;background:#b62d37}.use{right:125px;bottom:145px;background:#376ba8}.reload{right:200px;bottom:128px;background:#3a4352}.aim{right:128px;bottom:222px;background:#5b4a95}
 @media(min-width:900px){#mobile{display:none}}
@@ -171,9 +171,9 @@ linear-gradient(#c89b27 0 35%,#222 35% 40%,#b07c13 40% 100%);clip-path:polygon(0
     <canvas id="mapCanvas" width="700" height="500"></canvas><div id="infoContent"></div>
   </div>
 
-  <div id="mobile">
+  <div id="mobile"><div id="lookZone" style="position:absolute;right:0;top:0;width:58%;height:100%;pointer-events:auto;touch-action:none"></div>
     <div id="moveJoy" class="joy"><div class="knob"></div></div>
-    <div id="aimJoy" class="joy"><div class="knob"></div></div>
+    <div id="aimJoy" class="joy" style="display:none"><div class="knob"></div></div>
     <button id="fireBtn" class="action fire">FIRE</button><button id="useBtn" class="action use">USE</button>
     <button id="reloadBtn" class="action reload">R</button><button id="aimBtn" class="action aim">AIM</button>
   </div>
@@ -191,7 +191,7 @@ let player,monster,bots=[],shots=[],map=[],doors=[],objectives=[],night=1,timeLe
 let lobbyBuses=[],boardCountdown=0,boardBus=null,ads=false,baseSensitivity=.0025,currentSensitivity=.0025;
 const controls={
 pc:'WASD move • Mouse aim • Left click fire • Right click aim • E interact • R reload • Shift sprint • M map • Q quests',
-mobile:'Left joystick move • Right joystick aim • FIRE shoot • AIM slows aiming • USE interact • R reload',
+mobile:'Left joystick move • Drag on the right side to look around like Roblox • FIRE shoot • AIM slows aiming • USE interact • R reload',
 console:'Left stick move • Right stick aim • RT/R2 fire • LT/L2 aim • Square interact • Cross reload'
 };
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -499,7 +499,35 @@ function drawMap(){const mc=S('mapCanvas'),m=mc.getContext('2d'),sx=mc.width/map
 S('mapTab').onclick=()=>toggleInfo('map');S('questTab').onclick=()=>toggleInfo('quests');S('timeTab').onclick=()=>toggleInfo('time');S('helpTab').onclick=()=>{S('infoPanel').classList.add('open');S('mapCanvas').style.display='none';S('infoContent').innerHTML='<h2>How To Play</h2><p>Complete quests, repair water fountains by holding E, knock over objects while sprinting to distract the monster, and hide in lockers.</p><p>You may stay hidden for 1 minute. After that, hold E for 5 seconds to climb out.</p><p>Bullets slow the monster temporarily.</p>'};S('closeInfo').onclick=()=>S('infoPanel').classList.remove('open');
 function endGame(win,t){state='end';S('hud').classList.add('hidden');document.exitPointerLock?.();S('resultTitle').textContent=win?'YOU ESCAPED':'ROUND OVER';S('resultText').textContent=t;show('result')}
 function joy(id,cb){let e=S(id),k=e.querySelector('.knob'),on=0,cx=0,cy=0;e.ontouchstart=q=>{on=1;let r=e.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2};e.ontouchmove=q=>{q.preventDefault();if(!on)return;let t=q.touches[0],dx=t.clientX-cx,dy=t.clientY-cy,m=Math.hypot(dx,dy),mx=40;if(m>mx){dx=dx/m*mx;dy=dy/m*mx}k.style.transform=`translate(${dx}px,${dy}px)`;cb(dx/mx,dy/mx)};e.ontouchend=()=>{on=0;k.style.transform='';cb(0,0)}}
-joy('moveJoy',(a,b)=>{keys.KeyW=b<-.2;keys.KeyS=b>.2;keys.KeyA=a<-.2;keys.KeyD=a>.2});joy('aimJoy',(a,b)=>{if(player&&Math.hypot(a,b)>.2)player.a=Math.atan2(b,a)});S('fireBtn').ontouchstart=e=>{e.preventDefault();shoot()};S('useBtn').ontouchstart=e=>{e.preventDefault();use()};S('reloadBtn').ontouchstart=e=>{e.preventDefault();reload()};S('aimBtn').ontouchstart=e=>{e.preventDefault();setAds(!ads)};
+joy('moveJoy',(a,b)=>{keys.KeyW=b<-.2;keys.KeyS=b>.2;keys.KeyA=a<-.2;keys.KeyD=a>.2});let lookTouchId=null,lookLastX=0,lookLastY=0;
+const lookZone=S('lookZone');
+lookZone.addEventListener('touchstart',e=>{
+  if(!player||!(state==='play'||state==='lobby'))return;
+  const t=e.changedTouches[0];
+  lookTouchId=t.identifier;
+  lookLastX=t.clientX;
+  lookLastY=t.clientY;
+},{passive:false});
+lookZone.addEventListener('touchmove',e=>{
+  if(lookTouchId===null||!player)return;
+  for(const t of e.changedTouches){
+    if(t.identifier===lookTouchId){
+      e.preventDefault();
+      const dx=t.clientX-lookLastX;
+      const mobileSens=ads?0.0028:0.0048;
+      player.a+=dx*mobileSens;
+      lookLastX=t.clientX;
+      lookLastY=t.clientY;
+      break;
+    }
+  }
+},{passive:false});
+lookZone.addEventListener('touchend',e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===lookTouchId){lookTouchId=null;break}
+  }
+},{passive:false});
+lookZone.addEventListener('touchcancel',()=>{lookTouchId=null},{passive:false});S('fireBtn').ontouchstart=e=>{e.preventDefault();shoot()};S('useBtn').ontouchstart=e=>{e.preventDefault();use()};S('reloadBtn').ontouchstart=e=>{e.preventDefault();reload()};S('aimBtn').ontouchstart=e=>{e.preventDefault();setAds(!ads)};
 function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;update(dt);if(state==='play'||state==='lobby')render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 </script>
 </body>
