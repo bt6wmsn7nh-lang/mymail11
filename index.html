@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>School Bus Escape: 12 Nights</title>
+<title>School Bus Escape: 12 Nights — Stable</title>
 <style>
 :root{
   --red:#e54850;--dark:#07090d;--panel:rgba(8,11,16,.9);--text:#eef2f7;
@@ -168,7 +168,7 @@ let W,H,D=Math.min(devicePixelRatio||1,2);
 function resize(){W=innerWidth;H=innerHeight;D=Math.min(devicePixelRatio||1,2);canvas.width=W*D;canvas.height=H*D;ctx.setTransform(D,0,0,D,0,0);cinCanvas.width=W*D;cinCanvas.height=H*D;cctx.setTransform(D,0,0,D,0,0)}addEventListener('resize',resize);resize();
 const S=id=>document.getElementById(id);window.addEventListener('error',e=>{console.error(e.error||e.message);const m=document.getElementById('message');if(m){m.textContent='Game error: '+e.message;m.classList.add('show')}});
 const screens=['splash','deviceScreen','storyOverlay','resultScreen'];
-function show(id){screens.forEach(q=>{const e=S(q);if(e)e.classList.add('hidden')});if(id){const e=S(id);if(e)e.classList.remove('hidden')}}
+function show(id){for(const q of screens){const e=S(q);if(e)e.classList.add('hidden')}if(id){const e=S(id);if(e)e.classList.remove('hidden')}}
 function safeGetDevice(){try{return localStorage.getItem('schoolDevice')||''}catch(e){return ''}}
 function safeSetDevice(v){try{localStorage.setItem('schoolDevice',v)}catch(e){}}
 let device=safeGetDevice(),state='splash',last=performance.now(),keys={},mode='title';
@@ -179,9 +179,9 @@ pc:'WASD move • Mouse aim • Left click fire • Right click aim • E intera
 mobile:'Left joystick move • Drag on the right side to look around like Roblox • FIRE shoot • AIM slows aiming • USE interact • R reload',
 console:'Left stick move • Right stick aim • RT/R2 fire • LT/L2 aim • Square interact • Cross reload'
 };
-const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+const AudioContextClass=window.AudioContext||window.webkitAudioContext;const audioCtx=AudioContextClass?new AudioContextClass():null;
 
-function popSound(){try{audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.setValueAtTime(155,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(62,audioCtx.currentTime+.07);g.gain.setValueAtTime(.14,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.08);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.085)}catch(e){}}
+function popSound(){try{if(!audioCtx)return;audioCtx.resume?.();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.setValueAtTime(155,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(62,audioCtx.currentTime+.07);g.gain.setValueAtTime(.14,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.08);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.085)}catch(e){}}
 S('splashPlay').onclick=()=>{try{audioCtx.resume()}catch(e){} state='device';show('deviceScreen')};
 document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>{device=b.dataset.device;safeSetDevice(device);S('controlsText').textContent=controls[device];S('mobile').style.display=device==='mobile'?'block':'none';setTimeout(startForestLobby,250)});
 
@@ -195,7 +195,7 @@ function startForestLobby(){
   ];
   boardCountdown=0;boardBus=null;S('boardPrompt').style.display='block';S('boardPrompt').textContent='Walk into a red circle near a bus';
   S('nightBox').textContent='FOREST BUS LOBBY';S('timerBox').textContent='--:--';S('objectiveTop').textContent='CHOOSE A BUS IN 3D';
-  if(device==='pc')canvas.requestPointerLock?.();
+  if(device==='pc')canvas.requestPointerLock&&canvas.requestPointerLock();
 }
 function createForestMap(){
   const w=37,h=29,g=Array.from({length:h},(_,y)=>Array.from({length:w},(_,x)=>(x===0||y===0||x===w-1||y===h-1)?'1':'.'));
@@ -235,7 +235,7 @@ const schoolTemplate=[
 "1111111111111111111111111111111111111111"];
 const defs=[['Cut Chains','Find bolt cutters in a classroom'],['Remove Boards','Find a pry bar in the bathroom'],['Pull Nails','Find a hammer in the office'],['Unlock Door','Find the exit key in the final classroom']];
 
-function startWakeStory(){state='story';S('hud').classList.add('hidden');show('storyOverlay');S('storyTitle').textContent='YOU WAKE UP IN CLASS';S('storyText').textContent='You were knocked unconscious on the way in. Class is still active. Stay with your team until school ends.';S('storyContinue').onclick=()=>{show();S('hud').classList.remove('hidden');state='play';mode='school';message('School ends in 1:15. The nightmare begins after.');if(device==='pc')canvas.requestPointerLock?.()}}
+function startWakeStory(){state='story';S('hud').classList.add('hidden');show('storyOverlay');S('storyTitle').textContent='YOU WAKE UP IN CLASS';S('storyText').textContent='You were knocked unconscious on the way in. Class is still active. Stay with your team until school ends.';S('storyContinue').onclick=()=>{show();S('hud').classList.remove('hidden');state='play';mode='school';antiCheat.lastT=0;antiCheat.lastX=player.x;antiCheat.lastY=player.y;message('School ends in 1:15. The nightmare begins after.');if(device==='pc')canvas.requestPointerLock&&canvas.requestPointerLock()}}
 function triggerJumpScare(){const j=S('jumpScare');j.style.display='flex';setTimeout(()=>j.style.display='none',450)}
 function loseLife(reason){lives--;scareLevel++;triggerJumpScare();if(lives<=0){endGame(false,reason||'You lost all four lives.');return}player.hp=player.maxHp;player.x=6.5;player.y=4.5;player.noise=0;message(`Life lost. ${lives} lives remain.`)}
 function antiCheatCheck(){if(!player||state!=='play')return;const now=performance.now()/1000;if(!antiCheat.lastT){antiCheat.lastT=now;antiCheat.lastX=player.x;antiCheat.lastY=player.y;return}const elapsed=Math.max(.001,now-antiCheat.lastT),speed=Math.hypot(player.x-antiCheat.lastX,player.y-antiCheat.lastY)/elapsed;if(speed>antiCheat.maxSpeed){antiCheat.violations++;player.x=antiCheat.lastX;player.y=antiCheat.lastY;message('Anti-cheat: impossible movement blocked.')}antiCheat.lastX=player.x;antiCheat.lastY=player.y;antiCheat.lastT=now}
@@ -248,7 +248,7 @@ function buildSchool(){
   S('boardPrompt').style.display='none';updateHud();
 }
 function startBusCinematic(busId){
-  state='cinematic';S('hud').classList.add('hidden');document.exitPointerLock?.();S('cinematic').style.display='block';
+  state='cinematic';S('hud').classList.add('hidden');document.exitPointerLock&&document.exitPointerLock();S('cinematic').style.display='block';
   let start=performance.now();
   function scene(t){
     const elapsed=(t-start)/1000;cctx.clearRect(0,0,W,H);
@@ -372,7 +372,7 @@ addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyE'){interactHeld=0
 addEventListener('keyup',e=>{keys[e.code]=0;if(e.code==='KeyE'){interactHeld=0;exitHold=0;S('hideMeter').style.display='none'}});
 addEventListener('mousemove',e=>{if((state==='play'||state==='lobby')&&device==='pc'&&document.pointerLockElement)player.a+=e.movementX*currentSensitivity});
 addEventListener('mousedown',e=>{if(e.button===0)shoot();if(e.button===2)setAds(true)});addEventListener('mouseup',e=>{if(e.button===2)setAds(false)});addEventListener('contextmenu',e=>e.preventDefault());
-canvas.onclick=()=>{if(device==='pc'&&(state==='play'||state==='lobby'))canvas.requestPointerLock?.()};
+canvas.onclick=()=>{if(device==='pc'&&(state==='play'||state==='lobby'))canvas.requestPointerLock&&canvas.requestPointerLock()};
 
 function update(dt){
   if(state!=='play'&&state!=='lobby')return;
@@ -409,7 +409,7 @@ function updateSchool(dt){
   }
   updateHud()
 }
-function gamepad(){if(device!=='console')return;const g=navigator.getGamepads?.()[0];if(!g)return;setAds(!!g.buttons[6]?.pressed);player.a+=(Math.abs(g.axes[2])>.15?g.axes[2]*(ads?.022:.045):0);let lx=g.axes[0]||0,ly=g.axes[1]||0;if(Math.hypot(lx,ly)>.15)move(player,(Math.cos(player.a)*-ly+Math.cos(player.a+Math.PI/2)*lx)*.05,(Math.sin(player.a)*-ly+Math.sin(player.a+Math.PI/2)*lx)*.05);if(g.buttons[7]?.pressed)shoot();if(g.buttons[2]?.pressed)use();if(g.buttons[0]?.pressed)reload()}
+function gamepad(){if(device!=='console')return;const pads=navigator.getGamepads?navigator.getGamepads():[];const g=pads&&pads[0];if(!g)return;setAds(!!g.buttons[6]?.pressed);player.a+=(Math.abs(g.axes[2])>.15?g.axes[2]*(ads?.022:.045):0);let lx=g.axes[0]||0,ly=g.axes[1]||0;if(Math.hypot(lx,ly)>.15)move(player,(Math.cos(player.a)*-ly+Math.cos(player.a+Math.PI/2)*lx)*.05,(Math.sin(player.a)*-ly+Math.sin(player.a+Math.PI/2)*lx)*.05);if(g.buttons[7]?.pressed)shoot();if(g.buttons[2]?.pressed)use();if(g.buttons[0]?.pressed)reload()}
 function cast(a){let d=0,xx=player.x,yy=player.y,h='1';while(d<24){xx+=Math.cos(a)*.02;yy+=Math.sin(a)*.02;d+=.02;h=cell(xx,yy);if(solid(xx,yy)||h==='E')break}return{d,h}}
 function render(){S('rifle').style.display=hiding?'none':'block';let sky=ctx.createLinearGradient(0,0,0,H/2);sky.addColorStop(0,mode==='lobby'?'#17232b':`rgb(${16+scareLevel*10},${23-Math.min(12,scareLevel*3)},${34-Math.min(18,scareLevel*4)})`);sky.addColorStop(1,mode==='lobby'?'#26362e':'#29313a');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H/2);let fl=ctx.createLinearGradient(0,H/2,0,H);fl.addColorStop(0,mode==='lobby'?'#314238':'#45494f');fl.addColorStop(1,'#111318');ctx.fillStyle=fl;ctx.fillRect(0,H/2,W,H/2);
   const F=ads?.72:1.047,rays=Math.min(W,520),sw=W/rays;for(let i=0;i<rays;i++){let a=player.a-F/2+i/rays*F,r=cast(a),d=r.d*Math.cos(a-player.a),hh=Math.min(H*1.6,H/(d+.001)),yy=H/2-hh/2,col='#b7b3aa';if(r.h==='d')col='#9a6037';else if(r.h==='C')col='#79583b';else if(r.h==='R')col='#9fa6ac';else if(r.h==='L')col='#526f84';else if(r.h==='T')col='#19351f';else if(r.h==='E')col=exitOpen?'#3dcc7c':'#a02d38';let sh=Math.max(.2,1-d/22);ctx.fillStyle=shade(col,sh);ctx.fillRect(i*sw,yy,sw+1,hh);
@@ -448,7 +448,7 @@ function updateHud(){S('nightBox').textContent=nightmare?`NIGHT ${night} / 12`:'
 function toggleInfo(kind){const p=S('infoPanel');p.classList.toggle('open');if(!p.classList.contains('open'))return;S('mapCanvas').style.display=kind==='map'?'block':'none';if(kind==='map'){S('infoContent').innerHTML='<h2>School Map</h2><p>Blue: you. Red: monster. Yellow: unfinished quests.</p>';drawMap()}else if(kind==='quests'){S('infoContent').innerHTML='<h2>Quests</h2>'+objectives.map(o=>`<p>${o.ok?'✓':'○'} <b>${defs[o.d][0]}</b><br>${defs[o.d][1]}</p>`).join('')}else{S('infoContent').innerHTML=`<h2>Night ${night} of 12</h2><p>${S('timerBox').textContent} remains in this night.</p><p>Each night lasts five minutes.</p>`}}
 function drawMap(){const mc=S('mapCanvas'),m=mc.getContext('2d'),sx=mc.width/map[0].length,sy=mc.height/map.length;m.clearRect(0,0,mc.width,mc.height);for(let y=0;y<map.length;y++)for(let x=0;x<map[0].length;x++){const q=map[y][x];m.fillStyle=q==='1'?'#8b8f95':q==='d'?'#7a4d2e':'#202631';m.fillRect(x*sx,y*sy,sx,sy)}const dot=(x,y,c)=>{m.fillStyle=c;m.beginPath();m.arc(x*sx,y*sy,7,0,Math.PI*2);m.fill()};objectives.filter(o=>!o.ok).forEach(o=>dot(o.x,o.y,'#ffd84a'));dot(player.x,player.y,'#58a6ff');if(monster&&monster.active)dot(monster.x,monster.y,'#e34b55')}
 S('mapTab').onclick=()=>toggleInfo('map');S('questTab').onclick=()=>toggleInfo('quests');S('timeTab').onclick=()=>toggleInfo('time');S('helpTab').onclick=()=>{S('infoPanel').classList.add('open');S('mapCanvas').style.display='none';S('infoContent').innerHTML='<h2>How To Play</h2><p>Complete quests, repair water fountains by holding E, knock over objects while sprinting to distract the monster, and hide in lockers.</p><p>You may stay hidden for 1 minute. After that, hold E for 5 seconds to climb out.</p><p>Bullets slow the monster temporarily.</p><p>You have four lives. Each lost life makes the nightmare darker and triggers a jumpscare.</p><p>Blue arrows point to teammates. Complete the chain, board, nail, and key quests to escape.</p>'};S('closeInfo').onclick=()=>S('infoPanel').classList.remove('open');
-function endGame(win,t){state='end';S('hud').classList.add('hidden');document.exitPointerLock?.();S('resultTitle').textContent=win?'YOU ESCAPED':'ROUND OVER';S('resultText').textContent=t;show('result')}
+function endGame(win,t){state='end';S('hud').classList.add('hidden');document.exitPointerLock&&document.exitPointerLock();S('resultTitle').textContent=win?'YOU ESCAPED':'ROUND OVER';S('resultText').textContent=t;show('result')}
 function joy(id,cb){let e=S(id),k=e.querySelector('.knob'),on=0,cx=0,cy=0;e.ontouchstart=q=>{on=1;let r=e.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2};e.ontouchmove=q=>{q.preventDefault();if(!on)return;let t=q.touches[0],dx=t.clientX-cx,dy=t.clientY-cy,m=Math.hypot(dx,dy),mx=40;if(m>mx){dx=dx/m*mx;dy=dy/m*mx}k.style.transform=`translate(${dx}px,${dy}px)`;cb(dx/mx,dy/mx)};e.ontouchend=()=>{on=0;k.style.transform='';cb(0,0)}}
 joy('moveJoy',(a,b)=>{keys.KeyW=b<-.2;keys.KeyS=b>.2;keys.KeyA=a<-.2;keys.KeyD=a>.2});let lookTouchId=null,lookLastX=0,lookLastY=0;
 const lookZone=S('lookZone');
